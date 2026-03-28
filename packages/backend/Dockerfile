@@ -11,7 +11,7 @@ COPY packages/widget/ packages/widget/
 RUN cd packages/widget && pnpm build
 RUN cd packages/backend && pnpm build
 # Create standalone deployment with all deps
-RUN pnpm deploy --filter backend --prod /app/deployed
+RUN pnpm deploy --filter backend --prod --legacy /app/deployed
 
 FROM node:20-alpine
 WORKDIR /app
