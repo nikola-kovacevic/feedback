@@ -4,16 +4,26 @@ A self-hosted feedback analytics platform. Collect NPS-style feedback from your 
 
 ## Features
 
+### Core
 - **Embeddable Widget** — Lightweight JS plugin (~8KB gzipped) with floating button or inline embed modes. Shadow DOM for style isolation.
 - **NPS Analytics** — Average score, NPS calculation, score distribution, trends over time.
 - **Sentiment Analysis** — Automatic positive/negative/neutral classification using AFINN lexicon.
 - **Word Cloud** — TF-IDF keyword extraction from feedback comments.
 - **Cross-App Comparison** — Compare metrics across multiple registered applications.
-- **Top Performers** — Dashboard ranking of apps by score.
-- **Resolve/Archive** — Mark feedback as resolved. Auto-archive entries older than 12 months.
-- **Export** — CSV and JSON export with filters.
-- **Dark Mode** — System/Light/Dark theme toggle with glassmorphism UI.
-- **Self-Hosted** — Single `docker compose up` deploys everything.
+- **Top Performers** — Dashboard ranking of apps by average score with medals.
+- **Export** — CSV and JSON export with date and application filters.
+
+### Feedback Loop (Phase 2a)
+- **Feedback Tagging** — Tag feedback entries with categories (e.g., "performance", "bug", "onboarding"). Add/remove tags directly from the Responses table.
+- **Action Items** — Create action items tied to tags. Track completion with checkboxes. Manage from the Application Detail page.
+- **NPS Alerts** — Configure per-app Slack webhook alerts. Daily cron checks 7-day rolling NPS. Fires when NPS drops below your threshold.
+- **Resolve/Archive** — Mark feedback as resolved with a single click. Auto-archive entries older than 12 months via `POST /api/feedback/archive-old`.
+
+### Platform
+- **Dark Mode** — System/Light/Dark theme toggle with glassmorphism UI. Full coverage for all Ant Design components including dropdowns, popovers, and date pickers.
+- **Password Management** — Change password from the Settings page with current password verification.
+- **Self-Hosted** — Single `docker compose up` deploys everything. No external dependencies.
+- **Design System** — Documented in [DESIGN.md](DESIGN.md): color palette, spacing scale, component patterns, dark mode rules, accessibility guidelines.
 
 ## Tech Stack
 
@@ -144,7 +154,7 @@ cd packages/backend
 BASE_URL=http://localhost:3000 npx jest --config ./test/jest-e2e.json --forceExit --runInBand
 ```
 
-42 e2e tests covering: auth, applications CRUD, widget API, feedback submission, analytics, export, and resolve/unresolve.
+61 e2e tests covering: auth (register, login, refresh, password change), applications CRUD, widget API, feedback submission + tagging + resolve, action items CRUD, alert config, analytics (6 endpoints), export (CSV + JSON), multi-user isolation, and input validation.
 
 ## Project Structure
 
