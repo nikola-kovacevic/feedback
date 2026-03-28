@@ -369,6 +369,49 @@ describe('Feedback Hub Full Flow (e2e)', () => {
     });
   });
 
+  // ─── Widget JS Bundle ───────────────────────────────────
+  describe('Widget JS Bundle', () => {
+    it('should serve feedback.js at /widget/feedback.js', async () => {
+      const res = await fetch(`${BASE}/widget/feedback.js`);
+      expect(res.status).toBe(200);
+      const text = await res.text();
+      expect(text).toContain('FeedbackWidget');
+    });
+
+    it('should contain FeedbackWidget.init and FeedbackWidget.render', async () => {
+      const res = await fetch(`${BASE}/widget/feedback.js`);
+      const text = await res.text();
+      expect(text).toContain('init');
+      expect(text).toContain('render');
+    });
+  });
+
+  // ─── Export API ────────────────────────────────────────
+  describe('Export API edge cases', () => {
+    it('should return empty CSV when no data matches filter', async () => {
+      // Use a non-existent applicationId
+      const res = await authApi(
+        '/api/feedback/export?format=csv&applicationId=00000000-0000-0000-0000-000000000000',
+        accessToken,
+      );
+      expect([200, 201]).toContain(res.status);
+      const text = await res.text();
+      // Should have header but no data rows
+      expect(text).toContain('id,applicationId');
+    });
+
+    it('should return empty JSON array when no data matches filter', async () => {
+      const res = await authApi(
+        '/api/feedback/export?format=json&applicationId=00000000-0000-0000-0000-000000000000',
+        accessToken,
+      );
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(Array.isArray(body)).toBe(true);
+      expect(body.length).toBe(0);
+    });
+  });
+
   // ─── Cleanup ───────────────────────────────────────────
   describe('Cleanup', () => {
     it('should delete the application', async () => {

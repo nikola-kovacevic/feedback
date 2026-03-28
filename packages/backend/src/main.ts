@@ -26,8 +26,12 @@ async function bootstrap() {
     }),
   );
 
-  // Serve widget JS bundle
-  app.useStaticAssets(join(__dirname, '..', '..', 'widget', 'dist'), {
+  // Serve widget JS bundle (check Docker path first, then local dev path)
+  const widgetDistDocker = join(__dirname, '..', 'widget-dist');
+  const widgetDistLocal = join(__dirname, '..', '..', 'widget', 'dist');
+  const fs = require('fs');
+  const widgetPath = fs.existsSync(widgetDistDocker) ? widgetDistDocker : widgetDistLocal;
+  app.useStaticAssets(widgetPath, {
     prefix: '/widget/',
   });
 

@@ -132,7 +132,7 @@ const ApplicationDetailPage: React.FC = () => {
       </GlassCard>
 
       <GlassCard>
-        <EmbedSnippet appId={app.id} apiKey={app.apiKey} />
+        <EmbedSnippet apiKey={app.apiKey} mode={app.widgetConfig?.mode} />
       </GlassCard>
     </div>
   );

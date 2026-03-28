@@ -148,10 +148,42 @@ body::before {
   color: #F2F1F0 !important;
 }
 
-[data-theme='dark'] .ant-input {
+[data-theme='dark'] .ant-input,
+[data-theme='dark'] .ant-input-affix-wrapper,
+[data-theme='dark'] textarea.ant-input {
   background: rgba(20, 25, 50, 0.6) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   color: #F2F1F0 !important;
+}
+
+[data-theme='dark'] .ant-input::placeholder,
+[data-theme='dark'] .ant-input-affix-wrapper input::placeholder,
+[data-theme='dark'] textarea.ant-input::placeholder,
+[data-theme='dark'] .ant-select-selection-placeholder,
+[data-theme='dark'] .ant-picker-input input::placeholder {
+  color: rgba(255, 255, 255, 0.35) !important;
+}
+
+[data-theme='dark'] .ant-input-password input {
+  color: #F2F1F0 !important;
+}
+
+[data-theme='dark'] .ant-input-number {
+  background: rgba(20, 25, 50, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #F2F1F0 !important;
+}
+
+[data-theme='dark'] .ant-input-number-input {
+  color: #F2F1F0 !important;
+}
+
+[data-theme='dark'] .ant-switch {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+[data-theme='dark'] .ant-switch-checked {
+  background: #5B7AD4 !important;
 }
 
 [data-theme='dark'] .ant-btn-default {

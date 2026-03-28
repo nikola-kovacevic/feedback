@@ -4,7 +4,7 @@ import { DownloadOutlined } from '@ant-design/icons';
 import GlassCard from '../components/GlassCard';
 import FilterBar from '../components/FilterBar';
 import { useApplications } from '../hooks/useApplications';
-import { useFeedback } from '../hooks/useFeedback';
+import client from '../api/client';
 
 const { Title, Text } = Typography;
 
@@ -16,61 +16,63 @@ const ExportPage: React.FC = () => {
     undefined,
   ]);
   const [format, setFormat] = useState<'csv' | 'json'>('csv');
+  const [downloading, setDownloading] = useState(false);
 
   const { data: apps } = useApplications();
-  const { data: feedbackPage, isLoading } = useFeedback({
-    applicationId: appId,
-    startDate: dateRange[0],
-    endDate: dateRange[1],
-    limit: 10000,
-    page: 1,
-  });
 
   const handleReset = () => {
     setAppId(undefined);
     setDateRange([undefined, undefined]);
   };
 
-  const handleDownload = () => {
-    const items = feedbackPage?.items;
-    if (!items?.length) {
-      message.warning('No data to export');
-      return;
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      const params: Record<string, string> = { format };
+      if (appId) params.applicationId = appId;
+      if (dateRange[0]) params.dateFrom = dateRange[0];
+      if (dateRange[1]) params.dateTo = dateRange[1];
+
+      const res = await client.get('/feedback/export', {
+        params,
+        responseType: format === 'csv' ? 'blob' : 'json',
+      });
+
+      let blob: Blob;
+      let ext: string;
+
+      if (format === 'csv') {
+        blob = new Blob([res.data], { type: 'text/csv' });
+        ext = 'csv';
+      } else {
+        const data = Array.isArray(res.data) ? res.data : [];
+        if (data.length === 0) {
+          message.warning('No data to export');
+          setDownloading(false);
+          return;
+        }
+        blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        ext = 'json';
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `feedback-export.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      message.success(`Export downloaded as ${ext.toUpperCase()}`);
+    } catch (err: any) {
+      if (err?.response?.status === 401) {
+        message.error('Session expired. Please log in again.');
+      } else {
+        message.error('Export failed. Please try again.');
+      }
+    } finally {
+      setDownloading(false);
     }
-
-    let content: string;
-    let mime: string;
-    let ext: string;
-
-    if (format === 'json') {
-      content = JSON.stringify(items, null, 2);
-      mime = 'application/json';
-      ext = 'json';
-    } else {
-      const headers = ['id', 'applicationId', 'score', 'comment', 'sentiment', 'createdAt'];
-      const rows = items.map((item) =>
-        headers.map((h) => {
-          const val = String(item[h as keyof typeof item] ?? '');
-          return val.includes(',') || val.includes('"') || val.includes('\n')
-            ? `"${val.replace(/"/g, '""')}"`
-            : val;
-        }).join(','),
-      );
-      content = [headers.join(','), ...rows].join('\n');
-      mime = 'text/csv';
-      ext = 'csv';
-    }
-
-    const blob = new Blob([content], { type: mime });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `feedback-export.${ext}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    message.success(`Exported ${items.length} responses as ${ext.toUpperCase()}`);
   };
 
   return (
@@ -102,19 +104,17 @@ const ExportPage: React.FC = () => {
           </div>
 
           <Text type="secondary">
-            {feedbackPage?.total
-              ? `${feedbackPage.total} responses available for export`
-              : 'Select filters and click download'}
+            Select filters and format, then click download.
           </Text>
 
           <Button
             type="primary"
             icon={<DownloadOutlined />}
             onClick={handleDownload}
-            loading={isLoading}
+            loading={downloading}
             block
           >
-            Download
+            Download Export
           </Button>
         </Space>
       </GlassCard>

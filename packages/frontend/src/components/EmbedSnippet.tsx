@@ -5,20 +5,32 @@ import { CopyOutlined, CheckOutlined } from '@ant-design/icons';
 const { Text } = Typography;
 
 interface EmbedSnippetProps {
-  appId: string;
   apiKey: string;
+  mode?: 'floating' | 'inline';
 }
 
-const EmbedSnippet: React.FC<EmbedSnippetProps> = ({ appId, apiKey }) => {
+const EmbedSnippet: React.FC<EmbedSnippetProps> = ({ apiKey, mode = 'floating' }) => {
   const { token } = theme.useToken();
   const { message } = App.useApp();
   const [copied, setCopied] = useState(false);
 
-  const snippet = `<script src="${window.location.origin}/widget.js"></script>
+  const backendOrigin = window.location.port === '80' || window.location.port === ''
+    ? `${window.location.protocol}//${window.location.hostname}:3000`
+    : `${window.location.protocol}//${window.location.hostname}:3000`;
+
+  const snippet = mode === 'floating'
+    ? `<script src="${backendOrigin}/widget/feedback.js"></script>
 <script>
-  FeedbackHub.init({
-    appId: '${appId}',
+  FeedbackWidget.init({
     apiKey: '${apiKey}',
+  });
+</script>`
+    : `<div id="feedback-container"></div>
+<script src="${backendOrigin}/widget/feedback.js"></script>
+<script>
+  FeedbackWidget.render({
+    apiKey: '${apiKey}',
+    target: '#feedback-container',
   });
 </script>`;
 
