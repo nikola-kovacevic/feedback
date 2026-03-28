@@ -1,0 +1,50 @@
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-shadow: rgba(0, 0, 0, 0.06);
+  --glass-hover-shadow: rgba(0, 0, 0, 0.12);
+  --gradient-start: #e8e6e4;
+  --gradient-end: #d4d1ce;
+}
+
+[data-theme='dark'] {
+  --glass-bg: rgba(26, 29, 53, 0.65);
+  --glass-border: rgba(91, 122, 212, 0.15);
+  --glass-shadow: rgba(0, 0, 0, 0.2);
+  --glass-hover-shadow: rgba(0, 0, 0, 0.35);
+  --gradient-start: #0f1225;
+  --gradient-end: #1a1d35;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  z-index: -1;
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px var(--glass-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--glass-hover-shadow);
+}
+
+.glass-sider {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid var(--glass-border);
+}
