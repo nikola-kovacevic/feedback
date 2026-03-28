@@ -1,6 +1,6 @@
 :root {
-  --glass-bg: rgba(255, 255, 255, 0.45);
-  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-bg: rgba(255, 255, 255, 0.35);
+  --glass-border: rgba(255, 255, 255, 0.5);
   --glass-shadow: rgba(53, 75, 140, 0.08);
   --glass-hover-shadow: rgba(53, 75, 140, 0.12);
   --page-bg: #e8e6e4;
@@ -41,9 +41,10 @@ body::before {
   width: 100%;
   height: 100%;
   background:
-    radial-gradient(ellipse at 20% 20%, rgba(53, 75, 140, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(45, 115, 62, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 60% 30%, rgba(242, 187, 119, 0.06) 0%, transparent 40%);
+    radial-gradient(ellipse at 15% 15%, rgba(53, 75, 140, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 85%, rgba(45, 115, 62, 0.18) 0%, transparent 45%),
+    radial-gradient(ellipse at 55% 25%, rgba(242, 187, 119, 0.14) 0%, transparent 40%),
+    radial-gradient(ellipse at 70% 60%, rgba(217, 58, 43, 0.06) 0%, transparent 35%);
   z-index: 0;
   pointer-events: none;
 }
@@ -175,7 +176,11 @@ body::before {
   color: #F2F1F0 !important;
 }
 
-[data-theme='dark'] h1, [data-theme='dark'] h2, [data-theme='dark'] h3,
-[data-theme='dark'] h4, [data-theme='dark'] h5, [data-theme='dark'] h6 {
+[data-theme='dark'] h1:not([style*="color"]),
+[data-theme='dark'] h2:not([style*="color"]),
+[data-theme='dark'] h3:not([style*="color"]),
+[data-theme='dark'] h4:not([style*="color"]),
+[data-theme='dark'] h5:not([style*="color"]),
+[data-theme='dark'] h6:not([style*="color"]) {
   color: #F2F1F0 !important;
 }
