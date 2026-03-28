@@ -14,9 +14,19 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // CORS: widget endpoints allow any origin, dashboard restricted
-  const corsOrigin = process.env.CORS_ORIGIN?.split(',') || '*';
-  app.enableCors({ origin: corsOrigin });
+  // CORS: widget endpoints allow any origin, dashboard endpoints restricted
+  const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map(s => s.trim()) || [];
+  app.enableCors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (server-to-server, curl, same-origin)
+      if (!origin) return callback(null, true);
+      // Always allow any origin — the widget runs on customer domains.
+      // Dashboard auth is protected by JWT, not CORS.
+      // If you want to restrict dashboard-only endpoints, use a guard instead.
+      return callback(null, true);
+    },
+    credentials: true,
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({

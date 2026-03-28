@@ -73,10 +73,30 @@ body::before {
 
 /* Glass sidebar */
 .glass-sider {
-  background: var(--sidebar-bg) !important;
-  backdrop-filter: blur(20px) saturate(1.8) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(1.8) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: linear-gradient(
+    180deg,
+    rgba(40, 55, 110, 0.92) 0%,
+    rgba(53, 75, 140, 0.88) 40%,
+    rgba(35, 50, 100, 0.95) 100%
+  ) !important;
+  backdrop-filter: blur(24px) saturate(1.8) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.8) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow:
+    4px 0 24px rgba(53, 75, 140, 0.3),
+    inset -1px 0 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme='dark'] .glass-sider {
+  background: linear-gradient(
+    180deg,
+    rgba(15, 20, 42, 0.95) 0%,
+    rgba(20, 28, 55, 0.92) 40%,
+    rgba(12, 16, 35, 0.97) 100%
+  ) !important;
+  box-shadow:
+    4px 0 24px rgba(0, 0, 0, 0.4),
+    inset -1px 0 0 rgba(255, 255, 255, 0.04) !important;
 }
 
 .glass-sider .ant-layout-sider-children {
@@ -100,7 +120,9 @@ body::before {
 
 .glass-sider .ant-menu-item-selected {
   color: var(--sidebar-text) !important;
-  background: rgba(255, 255, 255, 0.15) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-left: 3px solid var(--sidebar-accent) !important;
+  padding-left: 21px !important;
 }
 
 .glass-sider .sidebar-brand {
