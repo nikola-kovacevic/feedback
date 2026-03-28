@@ -36,7 +36,7 @@ const ScoreTrendChart: React.FC<ScoreTrendChartProps> = ({ data, loading }) => {
               fontSize={12}
             />
             <Tooltip
-              labelFormatter={(val: string) => dayjs(val).format('MMM D, YYYY')}
+              labelFormatter={(val) => dayjs(String(val)).format('MMM D, YYYY')}
               contentStyle={{
                 background: token.colorBgContainer,
                 border: `1px solid ${token.colorBorder}`,
