@@ -26,13 +26,7 @@ const ComparisonPage: React.FC = () => {
       render: (v: number) => v?.toFixed(1) ?? '—',
       sorter: (a, b) => a.averageScore - b.averageScore,
     },
-    {
-      title: 'NPS',
-      dataIndex: 'npsScore',
-      key: 'nps',
-      sorter: (a, b) => a.npsScore - b.npsScore,
-    },
-    {
+{
       title: 'Responses',
       dataIndex: 'totalResponses',
       key: 'responses',
@@ -68,7 +62,6 @@ const ComparisonPage: React.FC = () => {
               />
               <Legend />
               <Bar dataKey="averageScore" fill={token.colorPrimary} name="Avg Score" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="npsScore" fill={token.colorSuccess} name="NPS" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}

@@ -2,9 +2,18 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'viewer';
+  role: 'admin' | 'member';
   createdAt: string;
   updatedAt: string;
+}
+
+export interface WidgetConfig {
+  mode: 'floating' | 'inline';
+  question: string;
+  commentRequired: boolean;
+  themeColor: string;
+  cooldownHours: number;
+  position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 }
 
 export interface Application {
@@ -12,38 +21,28 @@ export interface Application {
   name: string;
   description: string;
   apiKey: string;
-  ownerId: string;
+  previousApiKey: string | null;
+  previousApiKeyExpiresAt: string | null;
+  widgetConfig: WidgetConfig;
+  createdById: string;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface WidgetConfig {
-  id: string;
-  applicationId: string;
-  type: 'nps' | 'csat' | 'ces' | 'custom';
-  title: string;
-  question: string;
-  thankYouMessage: string;
-  position: 'bottom-right' | 'bottom-left' | 'center';
-  theme: Record<string, string>;
-  active: boolean;
-  createdAt: string;
-  updatedAt: string;
+  embedSnippet?: string;
 }
 
 export interface FeedbackResponse {
   id: string;
   applicationId: string;
-  widgetId: string;
+  application?: Application;
   score: number;
   comment: string;
-  metadata: Record<string, unknown>;
   sentiment: 'positive' | 'neutral' | 'negative';
+  userMetadata: Record<string, unknown> | null;
   createdAt: string;
 }
 
 export interface PaginatedResponse<T> {
-  data: T[];
+  items: T[];
   total: number;
   page: number;
   limit: number;
@@ -51,38 +50,31 @@ export interface PaginatedResponse<T> {
 }
 
 export interface AnalyticsSummary {
-  totalResponses: number;
   averageScore: number;
   npsScore: number;
-  responseRate: number;
-  promoters: number;
-  passives: number;
-  detractors: number;
+  totalResponses: number;
 }
 
 export interface TrendPoint {
-  date: string;
+  period: string;
   averageScore: number;
-  responseCount: number;
+  count: number;
 }
 
 export interface DistributionItem {
   score: number;
   count: number;
-  percentage: number;
 }
 
 export interface SentimentBreakdown {
   positive: number;
   neutral: number;
   negative: number;
-  total: number;
 }
 
 export interface KeywordItem {
-  keyword: string;
-  count: number;
-  sentiment: 'positive' | 'neutral' | 'negative';
+  term: string;
+  weight: number;
 }
 
 export interface ComparisonItem {
@@ -90,7 +82,6 @@ export interface ComparisonItem {
   applicationName: string;
   averageScore: number;
   totalResponses: number;
-  npsScore: number;
 }
 
 export interface FeedbackFilters {

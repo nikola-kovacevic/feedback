@@ -1,21 +1,38 @@
 :root {
-  --glass-bg: rgba(255, 255, 255, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.4);
-  --glass-shadow: rgba(0, 0, 0, 0.06);
-  --glass-hover-shadow: rgba(0, 0, 0, 0.12);
-  --gradient-start: #e8e6e4;
-  --gradient-end: #d4d1ce;
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-shadow: rgba(53, 75, 140, 0.08);
+  --glass-hover-shadow: rgba(53, 75, 140, 0.12);
+  --page-bg: #e8e6e4;
+  --sidebar-bg: rgba(53, 75, 140, 0.85);
+  --sidebar-text: rgba(255, 255, 255, 0.95);
+  --sidebar-text-muted: rgba(255, 255, 255, 0.6);
+  --sidebar-accent: #F2BB77;
 }
 
 [data-theme='dark'] {
-  --glass-bg: rgba(26, 29, 53, 0.65);
-  --glass-border: rgba(91, 122, 212, 0.15);
-  --glass-shadow: rgba(0, 0, 0, 0.2);
-  --glass-hover-shadow: rgba(0, 0, 0, 0.35);
-  --gradient-start: #0f1225;
-  --gradient-end: #1a1d35;
+  --glass-bg: rgba(40, 48, 80, 0.35);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: rgba(0, 0, 0, 0.3);
+  --glass-hover-shadow: rgba(0, 0, 0, 0.4);
+  --page-bg: #0f1225;
+  --sidebar-bg: rgba(20, 25, 50, 0.9);
+  --sidebar-text: rgba(255, 255, 255, 0.95);
+  --sidebar-text-muted: rgba(255, 255, 255, 0.5);
+  --sidebar-accent: #F2BB77;
 }
 
+html, body, #root {
+  min-height: 100vh;
+}
+
+body {
+  background: var(--page-bg);
+  transition: background 0.4s ease, color 0.3s ease;
+  margin: 0;
+}
+
+/* Gradient overlay for glassmorphism depth */
 body::before {
   content: '';
   position: fixed;
@@ -23,28 +40,142 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-  z-index: -1;
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(53, 75, 140, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(45, 115, 62, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 30%, rgba(242, 187, 119, 0.06) 0%, transparent 40%);
+  z-index: 0;
+  pointer-events: none;
 }
 
+/* Make all ant-layout transparent so gradient shows through */
+.ant-layout {
+  background: transparent !important;
+}
+
+/* Glass card */
 .glass-card {
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
   border: 1px solid var(--glass-border);
   border-radius: 12px;
-  box-shadow: 0 4px 16px var(--glass-shadow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  padding: 20px;
+  box-shadow: 0 8px 32px var(--glass-shadow);
+  transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .glass-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px var(--glass-hover-shadow);
+  box-shadow: 0 12px 48px var(--glass-hover-shadow);
 }
 
+/* Glass sidebar */
 .glass-sider {
-  background: var(--glass-bg) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-right: 1px solid var(--glass-border);
+  background: var(--sidebar-bg) !important;
+  backdrop-filter: blur(20px) saturate(1.8) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.8) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.glass-sider .ant-layout-sider-children {
+  background: transparent !important;
+}
+
+/* Sidebar text colors */
+.glass-sider .ant-menu {
+  background: transparent !important;
+  color: var(--sidebar-text-muted) !important;
+}
+
+.glass-sider .ant-menu-item {
+  color: var(--sidebar-text-muted) !important;
+}
+
+.glass-sider .ant-menu-item:hover {
+  color: var(--sidebar-text) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.glass-sider .ant-menu-item-selected {
+  color: var(--sidebar-text) !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.glass-sider .sidebar-brand {
+  color: var(--sidebar-text);
+}
+
+.glass-sider .ant-divider {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Ensure Ant tables and cards are translucent in dark mode */
+[data-theme='dark'] .ant-table {
+  background: rgba(30, 35, 60, 0.5) !important;
+}
+
+[data-theme='dark'] .ant-table-thead > tr > th {
+  background: rgba(53, 75, 140, 0.2) !important;
+  color: #F2F1F0 !important;
+}
+
+[data-theme='dark'] .ant-table-tbody > tr > td {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme='dark'] .ant-empty-description {
+  color: #b0b0c0 !important;
+}
+
+[data-theme='dark'] .ant-pagination {
+  color: #b0b0c0 !important;
+}
+
+[data-theme='dark'] .ant-select-selector {
+  background: rgba(20, 25, 50, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #F2F1F0 !important;
+}
+
+[data-theme='dark'] .ant-picker {
+  background: rgba(20, 25, 50, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme='dark'] .ant-picker-input > input {
+  color: #F2F1F0 !important;
+}
+
+[data-theme='dark'] .ant-input {
+  background: rgba(20, 25, 50, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #F2F1F0 !important;
+}
+
+[data-theme='dark'] .ant-btn-default {
+  background: rgba(30, 35, 60, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #F2F1F0 !important;
+}
+
+[data-theme='dark'] .ant-descriptions-item-label {
+  color: #808098 !important;
+}
+
+[data-theme='dark'] .ant-descriptions-item-content {
+  color: #F2F1F0 !important;
+}
+
+[data-theme='dark'] .ant-form-item-label > label {
+  color: #b0b0c0 !important;
+}
+
+[data-theme='dark'] .ant-typography {
+  color: #F2F1F0 !important;
+}
+
+[data-theme='dark'] h1, [data-theme='dark'] h2, [data-theme='dark'] h3,
+[data-theme='dark'] h4, [data-theme='dark'] h5, [data-theme='dark'] h6 {
+  color: #F2F1F0 !important;
 }

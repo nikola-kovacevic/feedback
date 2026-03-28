@@ -8,8 +8,8 @@ export function useFeedback(filters: FeedbackFilters) {
     queryFn: async () => {
       const params: Record<string, string | number> = {};
       if (filters.applicationId) params.applicationId = filters.applicationId;
-      if (filters.startDate) params.startDate = filters.startDate;
-      if (filters.endDate) params.endDate = filters.endDate;
+      if (filters.startDate) params.dateFrom = filters.startDate;
+      if (filters.endDate) params.dateTo = filters.endDate;
       if (filters.page) params.page = filters.page;
       if (filters.limit) params.limit = filters.limit;
       if (filters.sentiment) params.sentiment = filters.sentiment;

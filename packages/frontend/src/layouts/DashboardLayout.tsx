@@ -52,7 +52,8 @@ const DashboardLayout: React.FC = () => {
           <div style={{ padding: '8px 24px 16px' }}>
             <Title
               level={4}
-              style={{ margin: 0, color: token.colorPrimary, whiteSpace: 'nowrap' }}
+              className="sidebar-brand"
+              style={{ margin: 0, color: 'rgba(255, 255, 255, 0.95)', whiteSpace: 'nowrap' }}
             >
               Feedback Hub
             </Title>

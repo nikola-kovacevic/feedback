@@ -15,7 +15,7 @@ import { AnalyticsQueryDto } from './dto/analytics-query.dto';
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(CacheInterceptor)
-@CacheTTL(300000) // 5 minutes in ms
+@CacheTTL(60000) // 1 minute cache TTL
 @Controller('api/analytics')
 export class AnalyticsController {
   constructor(private analyticsService: AnalyticsService) {}

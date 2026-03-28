@@ -4,3 +4,4 @@ dist/
 .superpowers/
 *.tsbuildinfo
 .vite/
+.gstack/

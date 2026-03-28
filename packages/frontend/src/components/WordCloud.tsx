@@ -25,7 +25,7 @@ const PALETTE = [
 
 const WordCloud: React.FC<WordCloudProps> = ({ data, loading }) => {
   const { token } = theme.useToken();
-  const maxCount = Math.max(...(data || []).map((d) => d.count), 1);
+  const maxWeight = Math.max(...(data || []).map((d) => d.weight), 1);
 
   return (
     <GlassCard>
@@ -37,11 +37,11 @@ const WordCloud: React.FC<WordCloudProps> = ({ data, loading }) => {
       ) : (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {data.map((item, idx) => {
-            const weight = item.count / maxCount;
-            const fontSize = 12 + weight * 14;
+            const normalizedWeight = item.weight / maxWeight;
+            const fontSize = 12 + normalizedWeight * 14;
             return (
               <Tag
-                key={item.keyword}
+                key={item.term}
                 color={PALETTE[idx % PALETTE.length]}
                 style={{
                   fontSize,
@@ -50,7 +50,7 @@ const WordCloud: React.FC<WordCloudProps> = ({ data, loading }) => {
                   borderColor: token.colorBorder,
                 }}
               >
-                {item.keyword} ({item.count})
+                {item.term} ({item.weight})
               </Tag>
             );
           })}

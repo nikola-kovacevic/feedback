@@ -3,6 +3,7 @@ import { Typography, Form, Input, Select, Switch, InputNumber, Button, App } fro
 import { useNavigate } from 'react-router-dom';
 import GlassCard from '../components/GlassCard';
 import { useCreateApplication } from '../hooks/useApplications';
+import type { WidgetConfig } from '../types';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -29,6 +30,14 @@ const NewApplicationPage: React.FC = () => {
       const app = await createApp.mutateAsync({
         name: values.name,
         description: values.description,
+        widgetConfig: {
+          mode: values.mode as 'floating' | 'inline',
+          question: values.question || 'How would you rate your experience?',
+          commentRequired: values.commentRequired ?? true,
+          themeColor: values.themeColor || '#354B8C',
+          cooldownHours: values.cooldownHours ?? 24,
+          position: (values.position || 'bottom-right') as WidgetConfig['position'],
+        },
       });
       message.success('Application created successfully');
       navigate(`/applications/${app.id}`);
@@ -46,11 +55,12 @@ const NewApplicationPage: React.FC = () => {
           layout="vertical"
           onFinish={handleFinish}
           initialValues={{
-            mode: 'nps',
-            commentRequired: false,
+            mode: 'floating',
+            commentRequired: true,
             cooldownHours: 24,
             position: 'bottom-right',
             themeColor: '#354B8C',
+            question: 'How would you rate your experience?',
           }}
         >
           <Form.Item
@@ -68,10 +78,8 @@ const NewApplicationPage: React.FC = () => {
           <Form.Item name="mode" label="Widget Mode">
             <Select
               options={[
-                { label: 'NPS (0-10)', value: 'nps' },
-                { label: 'CSAT (1-5)', value: 'csat' },
-                { label: 'CES (1-7)', value: 'ces' },
-                { label: 'Custom', value: 'custom' },
+                { label: 'Floating Button', value: 'floating' },
+                { label: 'Inline Embed', value: 'inline' },
               ]}
             />
           </Form.Item>
@@ -97,7 +105,8 @@ const NewApplicationPage: React.FC = () => {
               options={[
                 { label: 'Bottom Right', value: 'bottom-right' },
                 { label: 'Bottom Left', value: 'bottom-left' },
-                { label: 'Center', value: 'center' },
+                { label: 'Top Right', value: 'top-right' },
+                { label: 'Top Left', value: 'top-left' },
               ]}
             />
           </Form.Item>

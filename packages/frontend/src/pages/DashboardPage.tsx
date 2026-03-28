@@ -110,7 +110,7 @@ const DashboardPage: React.FC = () => {
         </Col>
         <Col xs={24} lg={12}>
           <RecentComments
-            data={feedbackPage?.data}
+            data={feedbackPage?.items}
             loading={feedbackLoading}
             appNames={appNames}
           />

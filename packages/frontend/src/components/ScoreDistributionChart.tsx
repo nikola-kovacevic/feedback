@@ -61,7 +61,7 @@ const ScoreDistributionChart: React.FC<ScoreDistributionChartProps> = ({ data, l
                 />
               </div>
               <Text style={{ width: 40, fontSize: 12, flexShrink: 0 }}>
-                {item.count} ({item.percentage}%)
+                {item.count}
               </Text>
             </div>
           ))}

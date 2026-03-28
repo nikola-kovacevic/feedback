@@ -32,7 +32,7 @@ const ExportPage: React.FC = () => {
   };
 
   const handleDownload = () => {
-    const items = feedbackPage?.data;
+    const items = feedbackPage?.items;
     if (!items?.length) {
       message.warning('No data to export');
       return;

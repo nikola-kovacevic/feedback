@@ -26,7 +26,7 @@ export function useApplication(id: string | undefined) {
 export function useCreateApplication() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { name: string; description: string }) => {
+    mutationFn: async (payload: { name: string; description?: string; widgetConfig: Application['widgetConfig'] }) => {
       const { data } = await client.post('/applications', payload);
       return data as Application;
     },

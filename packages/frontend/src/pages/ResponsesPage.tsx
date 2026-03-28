@@ -107,7 +107,7 @@ const ResponsesPage: React.FC = () => {
       />
 
       <Table<FeedbackResponse>
-        dataSource={feedbackPage?.data}
+        dataSource={feedbackPage?.items}
         columns={columns}
         rowKey="id"
         loading={isLoading}
@@ -125,10 +125,10 @@ const ResponsesPage: React.FC = () => {
               <Paragraph style={{ margin: 0 }}>
                 <Text strong>Full Comment:</Text> {record.comment || 'No comment'}
               </Paragraph>
-              {record.metadata && Object.keys(record.metadata).length > 0 && (
+              {record.userMetadata && Object.keys(record.userMetadata).length > 0 && (
                 <Paragraph style={{ margin: '8px 0 0' }}>
                   <Text strong>Metadata:</Text>{' '}
-                  <code>{JSON.stringify(record.metadata, null, 2)}</code>
+                  <code>{JSON.stringify(record.userMetadata, null, 2)}</code>
                 </Paragraph>
               )}
             </div>
