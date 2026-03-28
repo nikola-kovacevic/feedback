@@ -6,6 +6,12 @@ import { User } from '../users/user.entity';
 
 export type WidgetPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 
+export interface AlertConfig {
+  enabled: boolean;
+  slackUrl: string;
+  npsThreshold: number;
+}
+
 export interface WidgetConfig {
   mode: 'floating' | 'inline';
   question: string;
@@ -37,6 +43,9 @@ export class Application {
 
   @Column({ type: 'jsonb' })
   widgetConfig: WidgetConfig;
+
+  @Column({ type: 'jsonb', nullable: true })
+  alertConfig: AlertConfig | null;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'createdById' })

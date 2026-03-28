@@ -27,6 +27,7 @@ export interface Application {
   createdById: string;
   createdAt: string;
   updatedAt: string;
+  alertConfig: { enabled: boolean; slackUrl: string; npsThreshold: number } | null;
   embedSnippet?: string;
 }
 
@@ -38,6 +39,7 @@ export interface FeedbackResponse {
   comment: string;
   sentiment: 'positive' | 'neutral' | 'negative';
   userMetadata: Record<string, unknown> | null;
+  tags: string[];
   resolved: boolean;
   archivedAt: string | null;
   createdAt: string;
@@ -84,6 +86,16 @@ export interface ComparisonItem {
   applicationName: string;
   averageScore: number;
   totalResponses: number;
+}
+
+export interface ActionItem {
+  id: string;
+  applicationId: string;
+  text: string;
+  tag: string | null;
+  completed: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface FeedbackFilters {

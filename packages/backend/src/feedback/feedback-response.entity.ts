@@ -36,6 +36,9 @@ export class FeedbackResponse {
   @Column({ type: 'jsonb', nullable: true })
   userMetadata: Record<string, unknown>;
 
+  @Column({ type: 'jsonb', default: '[]' })
+  tags: string[];
+
   @Column({ type: 'boolean', default: false })
   resolved: boolean;
 

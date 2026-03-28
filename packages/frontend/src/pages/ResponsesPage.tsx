@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Typography, Table, Tag, Button, App } from 'antd';
-import { CheckOutlined, UndoOutlined } from '@ant-design/icons';
+import { Typography, Table, Tag, Button, App, Popover, Input, Space } from 'antd';
+import { CheckOutlined, UndoOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
@@ -60,6 +60,19 @@ const ResponsesPage: React.FC = () => {
     },
   });
 
+  const tagMutation = useMutation({
+    mutationFn: async ({ id, tags }: { id: string; tags: string[] }) => {
+      await client.patch(`/feedback/${id}/tags`, { tags });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['feedback'] });
+      message.success('Tags updated');
+    },
+  });
+
+  const [tagInputValue, setTagInputValue] = useState('');
+  const [tagPopoverOpen, setTagPopoverOpen] = useState<string | null>(null);
+
   const columns: ColumnsType<FeedbackResponse> = [
     {
       title: 'Application',
@@ -93,6 +106,83 @@ const ResponsesPage: React.FC = () => {
           negative: 'red',
         };
         return <Tag color={colorMap[s] || 'default'}>{s}</Tag>;
+      },
+    },
+    {
+      title: 'Tags',
+      dataIndex: 'tags',
+      key: 'tags',
+      width: 200,
+      render: (tags: string[] | undefined, record: FeedbackResponse) => {
+        const currentTags = tags || [];
+        return (
+          <Space size={[4, 4]} wrap>
+            {currentTags.map((tag) => (
+              <Tag
+                key={tag}
+                color="blue"
+                closable
+                onClose={(e) => {
+                  e.preventDefault();
+                  tagMutation.mutate({
+                    id: record.id,
+                    tags: currentTags.filter((t) => t !== tag),
+                  });
+                }}
+              >
+                {tag}
+              </Tag>
+            ))}
+            <Popover
+              open={tagPopoverOpen === record.id}
+              onOpenChange={(open) => {
+                setTagPopoverOpen(open ? record.id : null);
+                if (!open) setTagInputValue('');
+              }}
+              trigger="click"
+              content={
+                <Space.Compact>
+                  <Input
+                    size="small"
+                    placeholder="New tag"
+                    value={tagInputValue}
+                    onChange={(e) => setTagInputValue(e.target.value)}
+                    onPressEnter={() => {
+                      const val = tagInputValue.trim();
+                      if (val && !currentTags.includes(val)) {
+                        tagMutation.mutate({ id: record.id, tags: [...currentTags, val] });
+                      }
+                      setTagInputValue('');
+                      setTagPopoverOpen(null);
+                    }}
+                    style={{ width: 120 }}
+                  />
+                  <Button
+                    size="small"
+                    type="primary"
+                    onClick={() => {
+                      const val = tagInputValue.trim();
+                      if (val && !currentTags.includes(val)) {
+                        tagMutation.mutate({ id: record.id, tags: [...currentTags, val] });
+                      }
+                      setTagInputValue('');
+                      setTagPopoverOpen(null);
+                    }}
+                  >
+                    Add
+                  </Button>
+                </Space.Compact>
+              }
+            >
+              <Tag
+                style={{ borderStyle: 'dashed', cursor: 'pointer' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <PlusOutlined /> Add Tag
+              </Tag>
+            </Popover>
+          </Space>
+        );
       },
     },
     {

@@ -84,6 +84,13 @@ export class FeedbackService {
     return qb.getMany();
   }
 
+  async updateTags(id: string, tags: string[]) {
+    const feedback = await this.feedbackRepository.findOne({ where: { id } });
+    if (!feedback) throw new NotFoundException('Feedback not found');
+    feedback.tags = tags;
+    return this.feedbackRepository.save(feedback);
+  }
+
   async resolve(id: string) {
     const feedback = await this.feedbackRepository.findOne({ where: { id } });
     if (!feedback) throw new NotFoundException('Feedback not found');

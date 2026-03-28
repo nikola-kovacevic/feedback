@@ -57,6 +57,13 @@ export class FeedbackController {
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
+  @Patch('feedback/:id/tags')
+  updateTags(@Param('id') id: string, @Body('tags') tags: string[]) {
+    return this.feedbackService.updateTags(id, tags || []);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @Patch('feedback/:id/resolve')
   resolve(@Param('id') id: string) {
     return this.feedbackService.resolve(id);

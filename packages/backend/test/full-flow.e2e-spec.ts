@@ -392,6 +392,112 @@ describe('PulseLoop Full Flow (e2e)', () => {
     });
   });
 
+  // ─── Feedback Tagging ──────────────────────────────────
+  describe('Feedback Tagging', () => {
+    it('should add tags to a feedback entry', async () => {
+      const res = await authApi(`/api/feedback/${feedbackId}/tags`, accessToken, {
+        method: 'PATCH',
+        body: JSON.stringify({ tags: ['performance', 'bug'] }),
+      });
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.tags).toEqual(['performance', 'bug']);
+    });
+
+    it('should clear tags with empty array', async () => {
+      const res = await authApi(`/api/feedback/${feedbackId}/tags`, accessToken, {
+        method: 'PATCH',
+        body: JSON.stringify({ tags: [] }),
+      });
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.tags).toEqual([]);
+    });
+  });
+
+  // ─── Action Items ─────────────────────────────────────
+  let actionItemId: string;
+
+  describe('Action Items', () => {
+    it('should create an action item', async () => {
+      const res = await authApi('/api/action-items', accessToken, {
+        method: 'POST',
+        body: JSON.stringify({
+          applicationId: appId,
+          text: 'Fix slow page load',
+          tag: 'performance',
+        }),
+      });
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.text).toBe('Fix slow page load');
+      expect(body.tag).toBe('performance');
+      expect(body.completed).toBe(false);
+      actionItemId = body.id;
+    });
+
+    it('should list action items for an application', async () => {
+      const res = await authApi(`/api/action-items?applicationId=${appId}`, accessToken);
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(Array.isArray(body)).toBe(true);
+      expect(body.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should complete an action item', async () => {
+      const res = await authApi(`/api/action-items/${actionItemId}/complete`, accessToken, {
+        method: 'PATCH',
+      });
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.completed).toBe(true);
+    });
+
+    it('should uncomplete an action item', async () => {
+      const res = await authApi(`/api/action-items/${actionItemId}/uncomplete`, accessToken, {
+        method: 'PATCH',
+      });
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.completed).toBe(false);
+    });
+
+    it('should delete an action item', async () => {
+      const res = await authApi(`/api/action-items/${actionItemId}`, accessToken, {
+        method: 'DELETE',
+      });
+      expect([200, 201]).toContain(res.status);
+    });
+  });
+
+  // ─── Alert Config ─────────────────────────────────────
+  describe('Alert Config', () => {
+    it('should update application with alertConfig', async () => {
+      const res = await authApi(`/api/applications/${appId}`, accessToken, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          alertConfig: {
+            enabled: true,
+            slackUrl: 'https://hooks.slack.com/test',
+            npsThreshold: 50,
+          },
+        }),
+      });
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.alertConfig.enabled).toBe(true);
+      expect(body.alertConfig.npsThreshold).toBe(50);
+    });
+
+    it('should persist alertConfig on application get', async () => {
+      const res = await authApi(`/api/applications/${appId}`, accessToken);
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.alertConfig).toBeDefined();
+      expect(body.alertConfig.enabled).toBe(true);
+    });
+  });
+
   // ─── Widget JS Bundle ───────────────────────────────────
   describe('Widget JS Bundle', () => {
     it('should serve feedback.js at /widget/feedback.js', async () => {

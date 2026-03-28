@@ -27,6 +27,19 @@ export class WidgetConfigDto {
   position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 }
 
+export class AlertConfigDto {
+  @IsBoolean()
+  enabled: boolean;
+
+  @IsString()
+  slackUrl: string;
+
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  npsThreshold: number;
+}
+
 export class CreateApplicationDto {
   @IsString()
   @MaxLength(255)
@@ -40,4 +53,9 @@ export class CreateApplicationDto {
   @ValidateNested()
   @Type(() => WidgetConfigDto)
   widgetConfig: WidgetConfigDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AlertConfigDto)
+  alertConfig?: AlertConfigDto;
 }
