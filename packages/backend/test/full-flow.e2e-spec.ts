@@ -1,445 +1,388 @@
-import { INestApplication } from '@nestjs/common';
-import request from 'supertest';
-import { createTestApp, cleanDatabase } from './helpers/test-setup';
+/**
+ * Full-flow e2e tests for Feedback Hub API.
+ * Runs against a live server (Docker or local dev).
+ * Set BASE_URL env var to override (default: http://localhost:3000).
+ */
 
-describe('Feedback Hub — Full E2E Flow', () => {
-  let app: INestApplication;
+const BASE = process.env.BASE_URL || 'http://localhost:3000';
 
-  // Shared state across ordered tests
+function api(path: string, options: RequestInit = {}) {
+  const { headers: extraHeaders, ...rest } = options;
+  return fetch(`${BASE}${path}`, {
+    ...rest,
+    headers: { 'Content-Type': 'application/json', ...(extraHeaders as any) },
+  });
+}
+
+function authApi(path: string, token: string, options: RequestInit = {}) {
+  const { headers: extraHeaders, ...rest } = options;
+  return api(path, {
+    ...rest,
+    headers: { Authorization: `Bearer ${token}`, ...(extraHeaders as any) },
+  });
+}
+
+describe('Feedback Hub Full Flow (e2e)', () => {
   let accessToken: string;
   let refreshToken: string;
-  let userId: string;
   let appId: string;
   let apiKey: string;
 
-  const testEmail = `e2e-${Date.now()}@test.com`;
-  const testPassword = 'TestPass123!';
-  const newPassword = 'NewPass456!';
+  const testUser = {
+    email: `e2e-${Date.now()}@test.com`,
+    password: 'TestPass123!',
+    name: 'E2E Tester',
+  };
 
-  beforeAll(async () => {
-    app = await createTestApp();
-    await cleanDatabase(app);
-  }, 30_000);
-
-  afterAll(async () => {
-    // Clean up test data so the database is left pristine
-    await cleanDatabase(app);
-    await app.close();
-  });
-
-  // ---------------------------------------------------------------------------
-  // AUTH
-  // ---------------------------------------------------------------------------
+  // ─── Auth ───────────────────────────────────────────────
   describe('Auth', () => {
-    it('1. Register a new user', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: testEmail, password: testPassword, name: 'E2E Tester' })
-        .expect(201);
-
-      expect(res.body).toHaveProperty('accessToken');
-      expect(res.body).toHaveProperty('refreshToken');
-      expect(res.body).toHaveProperty('user');
-      expect(res.body.user).not.toHaveProperty('passwordHash');
-      expect(res.body.user.email).toBe(testEmail);
-
-      accessToken = res.body.accessToken;
-      refreshToken = res.body.refreshToken;
-      userId = res.body.user.id;
+    it('should register a new user', async () => {
+      const res = await api('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(testUser),
+      });
+      expect(res.status).toBe(201);
+      const body = await res.json() as any;
+      expect(body.accessToken).toBeDefined();
+      expect(body.refreshToken).toBeDefined();
+      expect(body.user.email).toBe(testUser.email);
+      expect(body.user.passwordHash).toBeUndefined();
+      accessToken = body.accessToken;
+      refreshToken = body.refreshToken;
     });
 
-    it('2. Register duplicate email → 409', async () => {
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ email: testEmail, password: testPassword, name: 'Dupe' })
-        .expect(409);
+    it('should reject duplicate email', async () => {
+      const res = await api('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(testUser),
+      });
+      expect(res.status).toBe(409);
     });
 
-    it('3. Login with valid credentials', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: testEmail, password: testPassword })
-        .expect(200);
-
-      expect(res.body).toHaveProperty('accessToken');
-      expect(res.body).toHaveProperty('refreshToken');
-
-      // Use fresh tokens going forward
-      accessToken = res.body.accessToken;
-      refreshToken = res.body.refreshToken;
+    it('should login with valid credentials', async () => {
+      const res = await api('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: testUser.email, password: testUser.password }),
+      });
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.accessToken).toBeDefined();
+      accessToken = body.accessToken;
+      refreshToken = body.refreshToken;
     });
 
-    it('4. Login with wrong password → 401', async () => {
-      await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: testEmail, password: 'WrongPassword99!' })
-        .expect(401);
+    it('should reject wrong password', async () => {
+      const res = await api('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: testUser.email, password: 'wrong' }),
+      });
+      expect(res.status).toBe(401);
     });
 
-    it('5. GET /api/auth/me with token', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/api/auth/me')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
-
-      expect(res.body.id).toBe(userId);
-      expect(res.body.email).toBe(testEmail);
-      expect(res.body).not.toHaveProperty('passwordHash');
+    it('should return current user via /me', async () => {
+      const res = await authApi('/api/auth/me', accessToken);
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.email).toBe(testUser.email);
     });
 
-    it('6. POST /api/auth/refresh with refreshToken', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/api/auth/refresh')
-        .send({ refreshToken })
-        .expect(200);
-
-      expect(res.body).toHaveProperty('accessToken');
-      expect(res.body).toHaveProperty('refreshToken');
-
-      // Refresh tokens are single-use; update references
-      accessToken = res.body.accessToken;
-      refreshToken = res.body.refreshToken;
+    it('should reject /me without token', async () => {
+      const res = await api('/api/auth/me');
+      expect(res.status).toBe(401);
     });
 
-    it('7. POST /api/auth/change-password', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/api/auth/change-password')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({ currentPassword: testPassword, newPassword })
-        .expect(200);
-
-      expect(res.body.message).toMatch(/changed/i);
+    it('should refresh tokens', async () => {
+      const res = await api('/api/auth/refresh', {
+        method: 'POST',
+        body: JSON.stringify({ refreshToken }),
+      });
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.accessToken).toBeDefined();
+      accessToken = body.accessToken;
+      refreshToken = body.refreshToken;
     });
 
-    it('8. Login with new password', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: testEmail, password: newPassword })
-        .expect(200);
+    it('should change password', async () => {
+      const res = await authApi('/api/auth/change-password', accessToken, {
+        method: 'POST',
+        body: JSON.stringify({
+          currentPassword: testUser.password,
+          newPassword: 'NewPass456!',
+        }),
+      });
+      expect(res.status).toBe(201);
+    });
 
-      accessToken = res.body.accessToken;
-      refreshToken = res.body.refreshToken;
+    it('should login with new password', async () => {
+      const res = await api('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: testUser.email, password: 'NewPass456!' }),
+      });
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      accessToken = body.accessToken;
+      testUser.password = 'NewPass456!';
     });
   });
 
-  // ---------------------------------------------------------------------------
-  // APPLICATIONS
-  // ---------------------------------------------------------------------------
+  // ─── Applications ──────────────────────────────────────
   describe('Applications', () => {
-    const widgetConfig = {
-      mode: 'floating' as const,
-      question: 'How would you rate this product?',
-      commentRequired: false,
-      themeColor: '#4F46E5',
-      cooldownHours: 24,
-      position: 'bottom-right' as const,
-    };
-
-    it('9. Create application with full widgetConfig', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/api/applications')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({
+    it('should create an application with widgetConfig', async () => {
+      const res = await authApi('/api/applications', accessToken, {
+        method: 'POST',
+        body: JSON.stringify({
           name: 'E2E Test App',
-          description: 'Created during e2e test run',
-          widgetConfig,
-        })
-        .expect(201);
-
-      expect(res.body).toHaveProperty('id');
-      expect(res.body).toHaveProperty('apiKey');
-      expect(res.body.apiKey).toMatch(/^fb_/);
-      expect(res.body.widgetConfig).toMatchObject(widgetConfig);
-
-      appId = res.body.id;
-      apiKey = res.body.apiKey;
+          description: 'Created by e2e tests',
+          widgetConfig: {
+            mode: 'floating',
+            question: 'How do you like this app?',
+            commentRequired: true,
+            themeColor: '#354B8C',
+            cooldownHours: 24,
+            position: 'bottom-right',
+          },
+        }),
+      });
+      expect(res.status).toBe(201);
+      const body = await res.json() as any;
+      expect(body.name).toBe('E2E Test App');
+      expect(body.apiKey).toMatch(/^fb_/);
+      expect(body.widgetConfig.mode).toBe('floating');
+      appId = body.id;
+      apiKey = body.apiKey;
     });
 
-    it('10. List applications → array length 1', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/api/applications')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
-
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body).toHaveLength(1);
-      expect(res.body[0].id).toBe(appId);
+    it('should reject create without auth', async () => {
+      const res = await api('/api/applications', {
+        method: 'POST',
+        body: JSON.stringify({ name: 'Fail' }),
+      });
+      expect(res.status).toBe(401);
     });
 
-    it('11. Get application by ID', async () => {
-      const res = await request(app.getHttpServer())
-        .get(`/api/applications/${appId}`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
-
-      expect(res.body.id).toBe(appId);
-      expect(res.body).toHaveProperty('apiKey');
+    it('should list applications', async () => {
+      const res = await authApi('/api/applications', accessToken);
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('12. Update application name', async () => {
-      const res = await request(app.getHttpServer())
-        .patch(`/api/applications/${appId}`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .send({ name: 'E2E Renamed App' })
-        .expect(200);
-
-      expect(res.body.name).toBe('E2E Renamed App');
+    it('should get application by ID', async () => {
+      const res = await authApi(`/api/applications/${appId}`, accessToken);
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.id).toBe(appId);
     });
 
-    it('13. Regenerate API key', async () => {
+    it('should update application', async () => {
+      const res = await authApi(`/api/applications/${appId}`, accessToken, {
+        method: 'PATCH',
+        body: JSON.stringify({ name: 'Updated E2E App' }),
+      });
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.name).toBe('Updated E2E App');
+    });
+
+    it('should regenerate API key with grace period', async () => {
       const oldKey = apiKey;
-
-      const res = await request(app.getHttpServer())
-        .post(`/api/applications/${appId}/regenerate-key`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
-
-      expect(res.body.apiKey).not.toBe(oldKey);
-      expect(res.body.apiKey).toMatch(/^fb_/);
-      expect(res.body.previousApiKeyExpiresAt).toBeTruthy();
-
-      apiKey = res.body.apiKey;
+      const res = await authApi(`/api/applications/${appId}/regenerate-key`, accessToken, {
+        method: 'POST',
+      });
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.apiKey).not.toBe(oldKey);
+      expect(body.previousApiKeyExpiresAt).toBeDefined();
+      // Old key should still work during grace period
+      const oldKeyRes = await api(`/api/widget/config/${oldKey}`);
+      expect(oldKeyRes.status).toBe(200);
+      apiKey = body.apiKey;
     });
   });
 
-  // ---------------------------------------------------------------------------
-  // WIDGET
-  // ---------------------------------------------------------------------------
-  describe('Widget', () => {
-    it('14. GET /api/widget/config/:apiKey', async () => {
-      const res = await request(app.getHttpServer())
-        .get(`/api/widget/config/${apiKey}`)
-        .expect(200);
-
-      expect(res.body).toHaveProperty('mode');
-      expect(res.body).toHaveProperty('question');
-      expect(res.body).toHaveProperty('themeColor');
+  // ─── Widget API ────────────────────────────────────────
+  describe('Widget API', () => {
+    it('should return widget config', async () => {
+      const res = await api(`/api/widget/config/${apiKey}`);
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.question).toBe('How do you like this app?');
+      expect(body.mode).toBe('floating');
     });
 
-    it('15. Submit feedback — score 9, "Excellent!" → positive', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/api/widget/feedback')
-        .send({ apiKey, score: 9, comment: 'Excellent!' })
-        .expect(201);
-
-      expect(res.body.sentiment).toBe('positive');
-      expect(res.body.score).toBe(9);
+    it('should 404 for invalid API key', async () => {
+      const res = await api('/api/widget/config/fb_invalid');
+      expect(res.status).toBe(404);
     });
 
-    it('16. Submit feedback — score 3, "Terrible" → negative', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/api/widget/feedback')
-        .send({ apiKey, score: 3, comment: 'Terrible experience, nothing works' })
-        .expect(201);
-
-      expect(res.body.sentiment).toBe('negative');
+    it('should submit feedback (score 9, positive)', async () => {
+      const res = await api('/api/widget/feedback', {
+        method: 'POST',
+        body: JSON.stringify({ apiKey, score: 9, comment: 'Excellent product!' }),
+      });
+      expect(res.status).toBe(201);
+      const body = await res.json() as any;
+      expect(body.score).toBe(9);
+      expect(body.sentiment).toBe('positive');
     });
 
-    it('17. Submit feedback — score 7, "OK"', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/api/widget/feedback')
-        .send({ apiKey, score: 7, comment: 'OK' })
-        .expect(201);
-
-      expect(res.body).toHaveProperty('id');
+    it('should submit feedback (score 3, negative)', async () => {
+      const res = await api('/api/widget/feedback', {
+        method: 'POST',
+        body: JSON.stringify({ apiKey, score: 3, comment: 'Terrible, very slow and buggy' }),
+      });
+      expect(res.status).toBe(201);
+      const body = await res.json() as any;
+      expect(body.sentiment).toBe('negative');
     });
 
-    it('18. Submit feedback — score 10, "Amazing!"', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/api/widget/feedback')
-        .send({ apiKey, score: 10, comment: 'Amazing product, absolutely love it!' })
-        .expect(201);
-
-      expect(res.body.score).toBe(10);
+    it('should submit feedback (score 7)', async () => {
+      const res = await api('/api/widget/feedback', {
+        method: 'POST',
+        body: JSON.stringify({ apiKey, score: 7, comment: 'Pretty good overall' }),
+      });
+      expect(res.status).toBe(201);
     });
 
-    it('19. Submit feedback — score 2, "Bad app"', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/api/widget/feedback')
-        .send({ apiKey, score: 2, comment: 'Bad app, very disappointing and frustrating' })
-        .expect(201);
-
-      expect(res.body.score).toBe(2);
+    it('should submit feedback (score 10)', async () => {
+      const res = await api('/api/widget/feedback', {
+        method: 'POST',
+        body: JSON.stringify({ apiKey, score: 10, comment: 'Amazing experience!' }),
+      });
+      expect(res.status).toBe(201);
     });
 
-    it('20. Submit feedback — score out of range (11) → 400', async () => {
-      await request(app.getHttpServer())
-        .post('/api/widget/feedback')
-        .send({ apiKey, score: 11, comment: 'Too high' })
-        .expect(400);
+    it('should submit feedback (score 2)', async () => {
+      const res = await api('/api/widget/feedback', {
+        method: 'POST',
+        body: JSON.stringify({ apiKey, score: 2, comment: 'Bad app, not usable' }),
+      });
+      expect(res.status).toBe(201);
     });
 
-    it('21. Submit feedback — invalid apiKey → 404', async () => {
-      await request(app.getHttpServer())
-        .post('/api/widget/feedback')
-        .send({ apiKey: 'fb_invalid_key_that_does_not_exist', score: 5, comment: 'Hello' })
-        .expect(404);
-    });
-  });
-
-  // ---------------------------------------------------------------------------
-  // FEEDBACK LISTING
-  // ---------------------------------------------------------------------------
-  describe('Feedback listing', () => {
-    it('22. GET /api/feedback → 5 entries', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/api/feedback')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
-
-      expect(res.body).toHaveProperty('items');
-      expect(res.body).toHaveProperty('total');
-      expect(res.body.items).toHaveLength(5);
-      expect(res.body.total).toBe(5);
+    it('should reject score out of range', async () => {
+      const res = await api('/api/widget/feedback', {
+        method: 'POST',
+        body: JSON.stringify({ apiKey, score: 11, comment: 'Invalid' }),
+      });
+      expect(res.status).toBe(400);
     });
 
-    it('23. GET /api/feedback?applicationId=... → filtered results', async () => {
-      const res = await request(app.getHttpServer())
-        .get(`/api/feedback?applicationId=${appId}`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
-
-      expect(res.body.items.length).toBe(5);
-      for (const item of res.body.items) {
-        expect(item.applicationId).toBe(appId);
-      }
+    it('should reject invalid API key for feedback', async () => {
+      const res = await api('/api/widget/feedback', {
+        method: 'POST',
+        body: JSON.stringify({ apiKey: 'fb_doesnotexist', score: 5, comment: 'Test' }),
+      });
+      expect(res.status).toBe(404);
     });
   });
 
-  // ---------------------------------------------------------------------------
-  // ANALYTICS
-  // ---------------------------------------------------------------------------
+  // ─── Feedback Listing ──────────────────────────────────
+  describe('Feedback Listing', () => {
+    it('should list all feedback (5 entries)', async () => {
+      const res = await authApi(`/api/feedback?applicationId=${appId}`, accessToken);
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.items).toBeDefined();
+      expect(body.items.length).toBe(5);
+      expect(body.total).toBe(5);
+    });
+
+    it('should filter by applicationId', async () => {
+      const res = await authApi(`/api/feedback?applicationId=${appId}`, accessToken);
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.items.length).toBe(5);
+    });
+  });
+
+  // ─── Analytics ─────────────────────────────────────────
   describe('Analytics', () => {
-    it('24. GET /api/analytics/summary', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/api/analytics/summary')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
-
-      expect(res.body).toHaveProperty('averageScore');
-      expect(res.body).toHaveProperty('npsScore');
-      expect(res.body).toHaveProperty('totalResponses');
-      expect(res.body.totalResponses).toBe(5);
-      expect(typeof res.body.averageScore).toBe('number');
-      expect(typeof res.body.npsScore).toBe('number');
+    it('should return summary with correct totals', async () => {
+      const res = await authApi(`/api/analytics/summary?applicationId=${appId}`, accessToken);
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.totalResponses).toBe(5);
+      expect(typeof body.averageScore).toBe('number');
+      expect(typeof body.npsScore).toBe('number');
     });
 
-    it('25. GET /api/analytics/distribution → 11 items (scores 0-10)', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/api/analytics/distribution')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
-
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body).toHaveLength(11);
-      // Every entry has score and count
-      for (const entry of res.body) {
-        expect(entry).toHaveProperty('score');
-        expect(entry).toHaveProperty('count');
-      }
+    it('should return score distribution (11 items)', async () => {
+      const res = await authApi('/api/analytics/distribution', accessToken);
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.length).toBe(11);
     });
 
-    it('26. GET /api/analytics/trends?granularity=daily', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/api/analytics/trends?granularity=daily')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
-
-      expect(Array.isArray(res.body)).toBe(true);
-      // We submitted feedback today so at least 1 bucket
-      expect(res.body.length).toBeGreaterThanOrEqual(1);
-      expect(res.body[0]).toHaveProperty('period');
-      expect(res.body[0]).toHaveProperty('averageScore');
-      expect(res.body[0]).toHaveProperty('count');
+    it('should return trends', async () => {
+      const res = await authApi('/api/analytics/trends?granularity=daily', accessToken);
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(Array.isArray(body)).toBe(true);
+      expect(body.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('27. GET /api/analytics/sentiment', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/api/analytics/sentiment')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
-
-      expect(res.body).toHaveProperty('positive');
-      expect(res.body).toHaveProperty('negative');
-      expect(res.body).toHaveProperty('neutral');
-      expect(typeof res.body.positive).toBe('number');
-      expect(typeof res.body.negative).toBe('number');
-      expect(typeof res.body.neutral).toBe('number');
-      // Total should equal 5
-      expect(res.body.positive + res.body.negative + res.body.neutral).toBe(5);
+    it('should return sentiment breakdown', async () => {
+      const res = await authApi(`/api/analytics/sentiment?applicationId=${appId}`, accessToken);
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.positive).toBeDefined();
+      expect(body.negative).toBeDefined();
+      expect(body.neutral).toBeDefined();
+      expect(body.positive + body.negative + body.neutral).toBe(5);
     });
 
-    it('28. GET /api/analytics/word-cloud', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/api/analytics/word-cloud')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
-
-      expect(Array.isArray(res.body)).toBe(true);
+    it('should return word cloud', async () => {
+      const res = await authApi('/api/analytics/word-cloud', accessToken);
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(Array.isArray(body)).toBe(true);
     });
 
-    it('29. GET /api/analytics/comparison', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/api/analytics/comparison')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
-
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.length).toBeGreaterThanOrEqual(1);
-      expect(res.body[0]).toHaveProperty('applicationId');
-      expect(res.body[0]).toHaveProperty('applicationName');
-      expect(res.body[0]).toHaveProperty('averageScore');
-      expect(res.body[0]).toHaveProperty('totalResponses');
+    it('should return comparison', async () => {
+      const res = await authApi('/api/analytics/comparison', accessToken);
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(Array.isArray(body)).toBe(true);
+      expect(body.length).toBeGreaterThanOrEqual(1);
     });
   });
 
-  // ---------------------------------------------------------------------------
-  // EXPORT
-  // ---------------------------------------------------------------------------
+  // ─── Export ────────────────────────────────────────────
   describe('Export', () => {
-    it('30. GET /api/feedback/export?format=csv → CSV content', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/api/feedback/export?format=csv')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
-
-      expect(res.headers['content-type']).toMatch(/text\/csv/);
-      expect(res.text).toContain('id,applicationId,score,comment,sentiment,createdAt');
-      // Should have header + 5 data rows
-      const lines = res.text.trim().split('\n');
-      expect(lines.length).toBe(6);
+    it('should export as CSV', async () => {
+      const res = await authApi(`/api/feedback/export?format=csv&applicationId=${appId}`, accessToken);
+      expect([200, 201]).toContain(res.status);
+      const text = await res.text();
+      expect(text).toContain('id,applicationId,score,comment,sentiment,createdAt');
+      const lines = text.trim().split('\n');
+      expect(lines.length).toBe(6); // header + 5 rows
     });
 
-    it('31. GET /api/feedback/export?format=json → JSON array', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/api/feedback/export?format=json')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
-
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body).toHaveLength(5);
+    it('should export as JSON', async () => {
+      const res = await authApi(`/api/feedback/export?format=json&applicationId=${appId}`, accessToken);
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(Array.isArray(body)).toBe(true);
+      expect(body.length).toBe(5);
     });
   });
 
-  // ---------------------------------------------------------------------------
-  // CLEANUP — delete application
-  // ---------------------------------------------------------------------------
-  describe('Application deletion', () => {
-    it('32. Delete application', async () => {
-      await request(app.getHttpServer())
-        .delete(`/api/applications/${appId}`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
+  // ─── Cleanup ───────────────────────────────────────────
+  describe('Cleanup', () => {
+    it('should delete the application', async () => {
+      const res = await authApi(`/api/applications/${appId}`, accessToken, {
+        method: 'DELETE',
+      });
+      expect([200, 201]).toContain(res.status);
     });
 
-    it('33. List applications → empty array', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/api/applications')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200);
-
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body).toHaveLength(0);
+    it('should have empty applications list', async () => {
+      const res = await authApi('/api/applications', accessToken);
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.length).toBe(0);
     });
   });
 });

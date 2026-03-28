@@ -55,9 +55,10 @@ export class ApplicationsService {
     return this.repo.save(app);
   }
 
-  async remove(id: string, userId: string): Promise<void> {
+  async remove(id: string, userId: string): Promise<{ deleted: boolean }> {
     const app = await this.findOne(id, userId);
     await this.repo.remove(app);
+    return { deleted: true };
   }
 
   async regenerateKey(id: string, userId: string): Promise<Application> {

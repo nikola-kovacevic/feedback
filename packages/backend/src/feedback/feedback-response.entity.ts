@@ -17,7 +17,7 @@ export class FeedbackResponse {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Application)
+  @ManyToOne(() => Application, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'applicationId' })
   application: Application;
 
