@@ -8,8 +8,9 @@ import ScoreTrendChart from '../components/ScoreTrendChart';
 import ScoreDistributionChart from '../components/ScoreDistributionChart';
 import WordCloud from '../components/WordCloud';
 import RecentComments from '../components/RecentComments';
+import TopPerformers from '../components/TopPerformers';
 import { useApplications } from '../hooks/useApplications';
-import { useSummary, useTrends, useDistribution, useWordCloud } from '../hooks/useAnalytics';
+import { useSummary, useTrends, useDistribution, useWordCloud, useComparison } from '../hooks/useAnalytics';
 import { useFeedback } from '../hooks/useFeedback';
 
 const { Title } = Typography;
@@ -36,6 +37,7 @@ const DashboardPage: React.FC = () => {
   const { data: trends, isLoading: trendsLoading } = useTrends(params);
   const { data: distribution, isLoading: distLoading } = useDistribution(params);
   const { data: keywords, isLoading: keywordsLoading } = useWordCloud(params);
+  const { data: comparison, isLoading: comparisonLoading } = useComparison();
   const { data: feedbackPage, isLoading: feedbackLoading } = useFeedback({
     applicationId: appId,
     startDate: dateRange[0],
@@ -92,6 +94,8 @@ const DashboardPage: React.FC = () => {
         onReset={handleReset}
         onExport={() => navigate('/export')}
       />
+
+      <TopPerformers data={comparison} loading={comparisonLoading} />
 
       <SummaryCards data={summary} loading={summaryLoading || appsLoading} />
 

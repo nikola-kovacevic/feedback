@@ -80,12 +80,13 @@ export function getStyles(themeColor: string): string {
     .fb-scores {
       display: flex;
       flex-direction: row;
-      gap: 4px;
+      gap: 3px;
       margin-bottom: 4px;
     }
 
     .fb-score-btn {
-      width: 32px;
+      flex: 1;
+      min-width: 0;
       height: 32px;
       border: 1px solid #d1d5db;
       border-radius: 6px;
@@ -98,7 +99,7 @@ export function getStyles(themeColor: string): string {
       align-items: center;
       justify-content: center;
       transition: all 0.15s ease;
-      flex-shrink: 0;
+      padding: 0;
     }
 
     .fb-score-btn:hover {

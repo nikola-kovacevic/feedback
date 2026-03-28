@@ -38,6 +38,8 @@ export interface FeedbackResponse {
   comment: string;
   sentiment: 'positive' | 'neutral' | 'negative';
   userMetadata: Record<string, unknown> | null;
+  resolved: boolean;
+  archivedAt: string | null;
   createdAt: string;
 }
 

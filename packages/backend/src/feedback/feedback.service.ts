@@ -83,4 +83,33 @@ export class FeedbackService {
 
     return qb.getMany();
   }
+
+  async resolve(id: string) {
+    const feedback = await this.feedbackRepository.findOne({ where: { id } });
+    if (!feedback) throw new NotFoundException('Feedback not found');
+    feedback.resolved = true;
+    return this.feedbackRepository.save(feedback);
+  }
+
+  async unresolve(id: string) {
+    const feedback = await this.feedbackRepository.findOne({ where: { id } });
+    if (!feedback) throw new NotFoundException('Feedback not found');
+    feedback.resolved = false;
+    return this.feedbackRepository.save(feedback);
+  }
+
+  async archiveOld() {
+    const twelveMonthsAgo = new Date();
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+
+    const result = await this.feedbackRepository
+      .createQueryBuilder()
+      .update(FeedbackResponse)
+      .set({ archivedAt: new Date() })
+      .where('createdAt < :cutoff', { cutoff: twelveMonthsAgo })
+      .andWhere('archivedAt IS NULL')
+      .execute();
+
+    return { archived: result.affected || 0 };
+  }
 }

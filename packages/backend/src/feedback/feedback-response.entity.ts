@@ -36,6 +36,12 @@ export class FeedbackResponse {
   @Column({ type: 'jsonb', nullable: true })
   userMetadata: Record<string, unknown>;
 
+  @Column({ type: 'boolean', default: false })
+  resolved: boolean;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  archivedAt: Date;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }

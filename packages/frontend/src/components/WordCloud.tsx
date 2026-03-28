@@ -50,7 +50,7 @@ const WordCloud: React.FC<WordCloudProps> = ({ data, loading }) => {
                   borderColor: token.colorBorder,
                 }}
               >
-                {item.term} ({item.weight})
+                {item.term}
               </Tag>
             );
           })}

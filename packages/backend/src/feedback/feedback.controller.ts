@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Body, Query, UseGuards, Res,
+  Controller, Get, Post, Patch, Body, Query, Param, UseGuards, Res,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -53,5 +53,26 @@ export class FeedbackController {
     } else {
       res.json(data);
     }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Patch('feedback/:id/resolve')
+  resolve(@Param('id') id: string) {
+    return this.feedbackService.resolve(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Patch('feedback/:id/unresolve')
+  unresolve(@Param('id') id: string) {
+    return this.feedbackService.unresolve(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post('feedback/archive-old')
+  archiveOld() {
+    return this.feedbackService.archiveOld();
   }
 }

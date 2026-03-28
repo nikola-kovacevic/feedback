@@ -27,6 +27,7 @@ describe('Feedback Hub Full Flow (e2e)', () => {
   let refreshToken: string;
   let appId: string;
   let apiKey: string;
+  let feedbackId: string;
 
   const testUser = {
     email: `e2e-${Date.now()}@test.com`,
@@ -225,6 +226,7 @@ describe('Feedback Hub Full Flow (e2e)', () => {
       const body = await res.json() as any;
       expect(body.score).toBe(9);
       expect(body.sentiment).toBe('positive');
+      feedbackId = body.id;
     });
 
     it('should submit feedback (score 3, negative)', async () => {
@@ -366,6 +368,27 @@ describe('Feedback Hub Full Flow (e2e)', () => {
       const body = await res.json() as any;
       expect(Array.isArray(body)).toBe(true);
       expect(body.length).toBe(5);
+    });
+  });
+
+  // ─── Feedback Resolve/Unresolve ─────────────────────────
+  describe('Feedback Resolve', () => {
+    it('should resolve a feedback entry', async () => {
+      const res = await authApi(`/api/feedback/${feedbackId}/resolve`, accessToken, {
+        method: 'PATCH',
+      });
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.resolved).toBe(true);
+    });
+
+    it('should unresolve a feedback entry', async () => {
+      const res = await authApi(`/api/feedback/${feedbackId}/unresolve`, accessToken, {
+        method: 'PATCH',
+      });
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.resolved).toBe(false);
     });
   });
 

@@ -1,11 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { Typography, Table, Tag } from 'antd';
+import { Typography, Table, Tag, Button, App } from 'antd';
+import { CheckOutlined, UndoOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import FilterBar from '../components/FilterBar';
 import ScoreTag from '../components/ScoreTag';
 import { useApplications } from '../hooks/useApplications';
 import { useFeedback } from '../hooks/useFeedback';
+import client from '../api/client';
 import type { FeedbackResponse } from '../types';
 
 const { Title, Paragraph, Text } = Typography;
@@ -43,6 +46,20 @@ const ResponsesPage: React.FC = () => {
     setPage(1);
   };
 
+  const { message } = App.useApp();
+  const queryClient = useQueryClient();
+
+  const resolveMutation = useMutation({
+    mutationFn: async ({ id, resolve }: { id: string; resolve: boolean }) => {
+      const endpoint = resolve ? `/feedback/${id}/resolve` : `/feedback/${id}/unresolve`;
+      await client.patch(endpoint);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['feedback'] });
+      message.success('Feedback updated');
+    },
+  });
+
   const columns: ColumnsType<FeedbackResponse> = [
     {
       title: 'Application',
@@ -77,6 +94,25 @@ const ResponsesPage: React.FC = () => {
         };
         return <Tag color={colorMap[s] || 'default'}>{s}</Tag>;
       },
+    },
+    {
+      title: 'Status',
+      dataIndex: 'resolved',
+      key: 'status',
+      width: 120,
+      render: (resolved: boolean, record: FeedbackResponse) => (
+        <Button
+          size="small"
+          type={resolved ? 'default' : 'primary'}
+          icon={resolved ? <UndoOutlined /> : <CheckOutlined />}
+          onClick={(e) => {
+            e.stopPropagation();
+            resolveMutation.mutate({ id: record.id, resolve: !resolved });
+          }}
+        >
+          {resolved ? 'Reopen' : 'Resolve'}
+        </Button>
+      ),
     },
     {
       title: 'Date',

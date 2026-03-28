@@ -3,10 +3,8 @@ import {
   Get,
   Query,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsQueryDto } from './dto/analytics-query.dto';
@@ -14,8 +12,6 @@ import { AnalyticsQueryDto } from './dto/analytics-query.dto';
 @ApiTags('analytics')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@UseInterceptors(CacheInterceptor)
-@CacheTTL(60000) // 1 minute cache TTL
 @Controller('api/analytics')
 export class AnalyticsController {
   constructor(private analyticsService: AnalyticsService) {}
