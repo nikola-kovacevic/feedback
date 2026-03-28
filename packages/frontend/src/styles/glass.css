@@ -238,3 +238,80 @@ body::before {
 [data-theme='dark'] h6:not([style*="color"]) {
   color: #F2F1F0 !important;
 }
+
+/* ─── Dark mode: Dropdown menus ─── */
+[data-theme='dark'] .ant-select-dropdown {
+  background: rgba(25, 30, 55, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme='dark'] .ant-select-item {
+  color: #F2F1F0 !important;
+}
+
+[data-theme='dark'] .ant-select-item-option-active,
+[data-theme='dark'] .ant-select-item-option-selected {
+  background: rgba(91, 122, 212, 0.15) !important;
+}
+
+[data-theme='dark'] .ant-select-item-option-content {
+  color: #F2F1F0 !important;
+}
+
+/* ─── Dark mode: Popover ─── */
+[data-theme='dark'] .ant-popover .ant-popover-inner {
+  background: rgba(25, 30, 55, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme='dark'] .ant-popover .ant-popover-inner-content {
+  color: #F2F1F0 !important;
+}
+
+[data-theme='dark'] .ant-popover .ant-popover-arrow::before {
+  background: rgba(25, 30, 55, 0.95) !important;
+}
+
+/* ─── Dark mode: Date picker dropdown ─── */
+[data-theme='dark'] .ant-picker-dropdown .ant-picker-panel-container {
+  background: rgba(25, 30, 55, 0.95) !important;
+}
+
+[data-theme='dark'] .ant-picker-dropdown .ant-picker-header,
+[data-theme='dark'] .ant-picker-dropdown .ant-picker-content th,
+[data-theme='dark'] .ant-picker-dropdown .ant-picker-cell {
+  color: #b0b0c0 !important;
+}
+
+[data-theme='dark'] .ant-picker-dropdown .ant-picker-cell-in-view .ant-picker-cell-inner {
+  color: #F2F1F0 !important;
+}
+
+/* ─── Dark mode: Message/notification ─── */
+[data-theme='dark'] .ant-message .ant-message-notice-content {
+  background: rgba(30, 35, 60, 0.95) !important;
+  color: #F2F1F0 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ─── Dark mode: Popconfirm ─── */
+[data-theme='dark'] .ant-popconfirm .ant-popconfirm-message-title {
+  color: #F2F1F0 !important;
+}
+
+[data-theme='dark'] .ant-popconfirm .ant-popconfirm-description {
+  color: #b0b0c0 !important;
+}
+
+/* ─── Dark mode: Tooltip ─── */
+[data-theme='dark'] .ant-tooltip .ant-tooltip-inner {
+  background: rgba(20, 25, 45, 0.95) !important;
+  color: #F2F1F0 !important;
+}
+
+/* ─── Dark mode: Tag close button ─── */
+[data-theme='dark'] .ant-tag .ant-tag-close-icon {
+  color: inherit !important;
+}
