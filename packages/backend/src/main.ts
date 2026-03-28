@@ -46,7 +46,7 @@ async function bootstrap() {
   });
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Feedback Hub API')
+    .setTitle('PulseLoop API')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
@@ -54,6 +54,6 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   await app.listen(process.env.PORT || 3000);
-  console.log(`Feedback Hub API running on port ${process.env.PORT || 3000}`);
+  console.log(`PulseLoop API running on port ${process.env.PORT || 3000}`);
 }
 bootstrap();

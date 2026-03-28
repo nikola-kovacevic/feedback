@@ -59,8 +59,10 @@ const DashboardPage: React.FC = () => {
     setDateRange([undefined, undefined]);
   };
 
-  // Empty state — no responses at all
-  if (!summaryLoading && summary?.totalResponses === 0) {
+  const hasNoApps = !appsLoading && (!apps || apps.length === 0);
+  const hasNoData = !summaryLoading && summary !== undefined && summary.totalResponses === 0 && hasNoApps;
+
+  if (hasNoData) {
     return (
       <div>
         <Title level={3}>Dashboard</Title>

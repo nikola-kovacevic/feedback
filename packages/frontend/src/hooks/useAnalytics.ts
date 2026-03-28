@@ -18,10 +18,16 @@ interface AnalyticsParams {
 function buildParams(params: AnalyticsParams): Record<string, string> {
   const result: Record<string, string> = {};
   if (params.applicationId) result.applicationId = params.applicationId;
-  if (params.startDate) result.startDate = params.startDate;
-  if (params.endDate) result.endDate = params.endDate;
+  if (params.startDate) result.dateFrom = params.startDate;
+  if (params.endDate) result.dateTo = params.endDate;
   return result;
 }
+
+const QUERY_OPTIONS = {
+  staleTime: 0,
+  refetchOnMount: true as const,
+  refetchOnWindowFocus: true as const,
+};
 
 export function useSummary(params: AnalyticsParams = {}) {
   return useQuery<AnalyticsSummary>({
@@ -32,6 +38,7 @@ export function useSummary(params: AnalyticsParams = {}) {
       });
       return data;
     },
+    ...QUERY_OPTIONS,
   });
 }
 
@@ -44,6 +51,7 @@ export function useTrends(params: AnalyticsParams = {}) {
       });
       return data;
     },
+    ...QUERY_OPTIONS,
   });
 }
 
@@ -56,6 +64,7 @@ export function useDistribution(params: AnalyticsParams = {}) {
       });
       return data;
     },
+    ...QUERY_OPTIONS,
   });
 }
 
@@ -68,6 +77,7 @@ export function useSentiment(params: AnalyticsParams = {}) {
       });
       return data;
     },
+    ...QUERY_OPTIONS,
   });
 }
 
@@ -80,6 +90,7 @@ export function useWordCloud(params: AnalyticsParams = {}) {
       });
       return data;
     },
+    ...QUERY_OPTIONS,
   });
 }
 
@@ -90,5 +101,6 @@ export function useComparison() {
       const { data } = await client.get('/analytics/comparison');
       return data;
     },
+    ...QUERY_OPTIONS,
   });
 }

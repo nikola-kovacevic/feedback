@@ -1,5 +1,5 @@
 {
-  "name": "feedback-hub",
+  "name": "pulseloop",
   "private": true,
   "scripts": {
     "dev:backend": "pnpm --filter backend dev",

@@ -1,5 +1,5 @@
 /**
- * Full-flow e2e tests for Feedback Hub API.
+ * Full-flow e2e tests for PulseLoop API.
  * Runs against a live server (Docker or local dev).
  * Set BASE_URL env var to override (default: http://localhost:3000).
  */
@@ -22,7 +22,7 @@ function authApi(path: string, token: string, options: RequestInit = {}) {
   });
 }
 
-describe('Feedback Hub Full Flow (e2e)', () => {
+describe('PulseLoop Full Flow (e2e)', () => {
   let accessToken: string;
   let refreshToken: string;
   let appId: string;

@@ -4,6 +4,7 @@ import { LogoutOutlined } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ThemeToggle from '../components/ThemeToggle';
+import logo from '../assets/pulseloop.png';
 
 const { Sider, Content } = Layout;
 const { Title } = Typography;
@@ -57,13 +58,18 @@ const DashboardLayout: React.FC = () => {
             padding: '16px 0',
           }}
         >
-          <div style={{ padding: '8px 24px 16px' }}>
+          <div style={{ padding: '12px 20px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img
+              src={logo}
+              alt="PulseLoop"
+              style={{ width: 32, height: 32, borderRadius: 6 }}
+            />
             <Title
               level={4}
               className="sidebar-brand"
               style={{ margin: 0, color: 'rgba(255, 255, 255, 0.95)', whiteSpace: 'nowrap' }}
             >
-              Feedback Hub
+              PulseLoop
             </Title>
           </div>
 
