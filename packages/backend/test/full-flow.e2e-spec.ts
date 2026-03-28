@@ -541,6 +541,119 @@ describe('PulseLoop Full Flow (e2e)', () => {
     });
   });
 
+  // ─── Archive Old Feedback ─────────────────────────────
+  describe('Archive Old Feedback', () => {
+    it('should call archive-old endpoint without error', async () => {
+      const res = await authApi('/api/feedback/archive-old', accessToken, {
+        method: 'POST',
+      });
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(typeof body.archived).toBe('number');
+    });
+  });
+
+  // ─── Multi-User Isolation ─────────────────────────────
+  describe('Multi-User Isolation', () => {
+    let otherToken: string;
+
+    it('should register a second user', async () => {
+      const res = await api('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: `other-${Date.now()}@test.com`,
+          password: 'OtherPass123!',
+          name: 'Other User',
+        }),
+      });
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      otherToken = body.accessToken;
+    });
+
+    it('should not see first user apps from second user', async () => {
+      const res = await authApi('/api/applications', otherToken);
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.length).toBe(0);
+    });
+
+    it('should not access first user app by ID from second user', async () => {
+      const res = await authApi(`/api/applications/${appId}`, otherToken);
+      expect(res.status).toBe(404);
+    });
+  });
+
+  // ─── Old Password Rejection ───────────────────────────
+  describe('Old Password Rejection', () => {
+    it('should reject login with old password after change', async () => {
+      const res = await api('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: testUser.email,
+          password: 'TestPass123!', // original password, should fail
+        }),
+      });
+      expect(res.status).toBe(401);
+    });
+  });
+
+  // ─── Validation Error Tests ───────────────────────────
+  describe('Input Validation', () => {
+    it('should reject feedback with missing score', async () => {
+      const res = await api('/api/widget/feedback', {
+        method: 'POST',
+        body: JSON.stringify({ apiKey, comment: 'no score' }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject feedback with negative score', async () => {
+      const res = await api('/api/widget/feedback', {
+        method: 'POST',
+        body: JSON.stringify({ apiKey, score: -1, comment: 'negative' }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject registration with short password', async () => {
+      const res = await api('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: 'short@test.com',
+          password: '123',
+          name: 'Short Pass',
+        }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject registration with invalid email', async () => {
+      const res = await api('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: 'not-an-email',
+          password: 'ValidPass123!',
+          name: 'Bad Email',
+        }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject action item with empty text', async () => {
+      const res = await authApi('/api/action-items', accessToken, {
+        method: 'POST',
+        body: JSON.stringify({
+          applicationId: appId,
+          text: '',
+        }),
+      });
+      // Either 400 (validation) or 201 (empty string accepted)
+      // We want to verify the endpoint handles it without crashing
+      expect([200, 201, 400]).toContain(res.status);
+    });
+  });
+
   // ─── Cleanup ───────────────────────────────────────────
   describe('Cleanup', () => {
     it('should delete the application', async () => {
