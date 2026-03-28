@@ -7,6 +7,8 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { SentimentModule } from './sentiment/sentiment.module';
+import { FeedbackModule } from './feedback/feedback.module';
+import { WidgetModule } from './widget/widget.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { SentimentModule } from './sentiment/sentiment.module';
     AuthModule,
     ApplicationsModule,
     SentimentModule,
+    FeedbackModule,
+    WidgetModule,
   ],
 })
 export class AppModule {}

@@ -1,0 +1,57 @@
+import {
+  Controller, Get, Post, Body, Query, UseGuards, Res,
+} from '@nestjs/common';
+import { Response } from 'express';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ThrottlerGuard } from '@nestjs/throttler';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { FeedbackService } from './feedback.service';
+import { SubmitFeedbackDto } from './dto/submit-feedback.dto';
+import { QueryFeedbackDto } from './dto/query-feedback.dto';
+
+@ApiTags('feedback')
+@Controller('api')
+export class FeedbackController {
+  constructor(private feedbackService: FeedbackService) {}
+
+  @UseGuards(ThrottlerGuard)
+  @Post('widget/feedback')
+  submitFeedback(@Body() dto: SubmitFeedbackDto) {
+    return this.feedbackService.submit(dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Get('feedback')
+  findAll(@Query() query: QueryFeedbackDto) {
+    return this.feedbackService.findAll(query);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Get('feedback/export')
+  async exportFeedback(
+    @Query() query: QueryFeedbackDto,
+    @Query('format') format: string,
+    @Res() res: Response,
+  ) {
+    const data = await this.feedbackService.exportAll(query);
+
+    if (format === 'csv') {
+      const header = 'id,applicationId,score,comment,sentiment,createdAt\n';
+      const rows = data
+        .map((r) => {
+          // CSV injection protection: prefix cells starting with =, +, -, @ with tab
+          const safeComment = (r.comment || '').replace(/"/g, '""');
+          const prefixed = /^[=+\-@]/.test(safeComment) ? '\t' + safeComment : safeComment;
+          return `"${r.id}","${r.applicationId}",${r.score},"${prefixed}","${r.sentiment}","${r.createdAt.toISOString()}"`;
+        })
+        .join('\n');
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=feedback-export.csv');
+      res.send(header + rows);
+    } else {
+      res.json(data);
+    }
+  }
+}
