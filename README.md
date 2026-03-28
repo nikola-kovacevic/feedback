@@ -173,6 +173,12 @@ pulseloop/
 | `BACKEND_URL` | http://localhost:3000 | Backend URL for embed snippets |
 | `TYPEORM_SYNC` | false | Set to `true` to auto-sync schema (dev only) |
 
+## Screenshots
+![Widget](image.png)
+![Dashboard](image-1.png)
+![Responses](image-2.png)
+![Exports](image-3.png)
+
 ## License
 
 [MIT](LICENSE)
