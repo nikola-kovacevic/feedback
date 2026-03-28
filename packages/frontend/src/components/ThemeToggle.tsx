@@ -1,34 +1,66 @@
 import React from 'react';
-import { Button, Space } from 'antd';
-import { theme } from 'antd';
 import { useTheme } from '../context/ThemeContext';
 
 type ThemeMode = 'light' | 'system' | 'dark';
 
 const ThemeToggle: React.FC = () => {
   const { mode, setMode } = useTheme();
-  const { token } = theme.useToken();
 
   const modes: ThemeMode[] = ['light', 'system', 'dark'];
 
   return (
-    <Space size={4} style={{ display: 'flex', justifyContent: 'center', padding: '8px 0' }}>
-      {modes.map((m) => (
-        <Button
-          key={m}
-          size="small"
-          type={mode === m ? 'primary' : 'text'}
-          style={{
-            fontSize: 12,
-            textTransform: 'capitalize',
-            color: mode === m ? undefined : token.colorTextSecondary,
-          }}
-          onClick={() => setMode(m)}
-        >
-          {m}
-        </Button>
-      ))}
-    </Space>
+    <div style={{ padding: '8px 0' }}>
+      <div
+        style={{
+          fontSize: 11,
+          color: 'rgba(255,255,255,0.5)',
+          textTransform: 'uppercase',
+          letterSpacing: 0.5,
+          marginBottom: 6,
+          textAlign: 'center',
+        }}
+      >
+        Theme
+      </div>
+      <div
+        role="radiogroup"
+        aria-label="Theme selection"
+        style={{
+          display: 'flex',
+          gap: 0,
+          background: 'rgba(0,0,0,0.25)',
+          borderRadius: 6,
+          padding: 2,
+        }}
+      >
+        {modes.map((m) => (
+          <button
+            key={m}
+            role="radio"
+            aria-checked={mode === m}
+            aria-label={`${m} theme`}
+            onClick={() => setMode(m)}
+            style={{
+              flex: 1,
+              padding: '5px 0',
+              textAlign: 'center',
+              fontSize: 11,
+              fontWeight: mode === m ? 600 : 400,
+              color: mode === m ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.5)',
+              background: mode === m ? 'rgba(255,255,255,0.18)' : 'transparent',
+              border: 'none',
+              borderRadius: 4,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              transition: 'all 0.2s',
+              textTransform: 'capitalize',
+            }}
+          >
+            {m}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 };
 

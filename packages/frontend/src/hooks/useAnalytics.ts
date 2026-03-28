@@ -73,9 +73,9 @@ export function useSentiment(params: AnalyticsParams = {}) {
 
 export function useWordCloud(params: AnalyticsParams = {}) {
   return useQuery<KeywordItem[]>({
-    queryKey: ['analytics', 'keywords', params],
+    queryKey: ['analytics', 'word-cloud', params],
     queryFn: async () => {
-      const { data } = await client.get('/analytics/keywords', {
+      const { data } = await client.get('/analytics/word-cloud', {
         params: buildParams(params),
       });
       return data;

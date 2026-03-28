@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Typography, Divider } from 'antd';
+import { Layout, Menu, Typography, Divider, Button } from 'antd';
+import { LogoutOutlined } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { theme } from 'antd';
 import { useAuth } from '../context/AuthContext';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -9,7 +9,7 @@ const { Sider, Content } = Layout;
 const { Title } = Typography;
 
 const NAV_ITEMS = [
-  { key: '/dashboard', label: 'Dashboard' },
+  { key: '/', label: 'Dashboard' },
   { key: '/applications', label: 'Applications' },
   { key: '/responses', label: 'Responses' },
   { key: '/comparison', label: 'Comparison' },
@@ -22,11 +22,17 @@ const DashboardLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
-  const { token } = theme.useToken();
 
   const selectedKey = NAV_ITEMS.find((item) =>
-    location.pathname.startsWith(item.key),
-  )?.key || '/dashboard';
+    item.key === '/'
+      ? location.pathname === '/'
+      : location.pathname.startsWith(item.key),
+  )?.key || '/';
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -39,6 +45,8 @@ const DashboardLayout: React.FC = () => {
         breakpoint="md"
         collapsedWidth={0}
         trigger={null}
+        role="navigation"
+        aria-label="Main navigation"
         style={{ position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 10 }}
       >
         <div
@@ -65,22 +73,39 @@ const DashboardLayout: React.FC = () => {
             items={NAV_ITEMS}
             onClick={({ key }) => navigate(key)}
             style={{ border: 'none', flex: 1 }}
+            aria-label="Page navigation"
           />
 
           <div style={{ padding: '0 12px' }}>
-            <Divider style={{ margin: '8px 0' }} />
+            <Divider style={{ margin: '8px 0', borderColor: 'rgba(255,255,255,0.1)' }} />
             <ThemeToggle />
-            <Divider style={{ margin: '8px 0' }} />
-            <Menu
-              mode="inline"
-              selectable={false}
-              items={[{ key: 'logout', label: 'Logout' }]}
-              onClick={() => {
-                logout();
-                navigate('/login');
+            <Divider style={{ margin: '8px 0', borderColor: 'rgba(255,255,255,0.1)' }} />
+            <Button
+              type="text"
+              icon={<LogoutOutlined />}
+              onClick={handleLogout}
+              aria-label="Log out"
+              block
+              style={{
+                color: 'rgba(255, 255, 255, 0.7)',
+                textAlign: 'left',
+                height: 40,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                borderRadius: 6,
               }}
-              style={{ border: 'none' }}
-            />
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = 'rgba(255, 255, 255, 0.95)';
+                e.currentTarget.style.background = 'rgba(217, 58, 43, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              Logout
+            </Button>
           </div>
         </div>
       </Sider>
@@ -92,6 +117,8 @@ const DashboardLayout: React.FC = () => {
         }}
       >
         <Content
+          role="main"
+          aria-label="Page content"
           style={{
             padding: 24,
             minHeight: 'calc(100vh - 48px)',

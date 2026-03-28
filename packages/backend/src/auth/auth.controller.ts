@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @ApiTags('auth')
@@ -35,5 +36,15 @@ export class AuthController {
   @Get('me')
   getProfile(@Request() req: { user: { id: string } }) {
     return this.authService.getProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post('change-password')
+  changePassword(
+    @Body() dto: ChangePasswordDto,
+    @Request() req: { user: { id: string } },
+  ) {
+    return this.authService.changePassword(req.user.id, dto.currentPassword, dto.newPassword);
   }
 }

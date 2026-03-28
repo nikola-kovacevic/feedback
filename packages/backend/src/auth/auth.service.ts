@@ -75,6 +75,18 @@ export class AuthService {
     return this.sanitizeUser(user);
   }
 
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException();
+
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) throw new UnauthorizedException('Current password is incorrect');
+
+    user.passwordHash = await bcrypt.hash(newPassword, 12);
+    await this.usersRepository.save(user);
+    return { message: 'Password changed successfully' };
+  }
+
   private async generateTokens(user: User) {
     const accessToken = this.jwtService.sign({ sub: user.id, email: user.email });
 
