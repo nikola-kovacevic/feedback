@@ -1,6 +1,6 @@
 import {
   IsString, MaxLength, IsBoolean, IsIn, IsInt, Min, Max,
-  IsOptional, ValidateNested, IsHexColor,
+  IsOptional, ValidateNested, IsHexColor, Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -32,6 +32,9 @@ export class AlertConfigDto {
   enabled: boolean;
 
   @IsString()
+  @Matches(/^https:\/\/hooks\.slack\.com\/services\//, {
+    message: 'slackUrl must be a valid Slack webhook URL (https://hooks.slack.com/services/...)',
+  })
   slackUrl: string;
 
   @IsInt()

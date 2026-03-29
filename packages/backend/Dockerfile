@@ -18,5 +18,7 @@ WORKDIR /app
 COPY --from=builder /app/deployed ./
 COPY --from=builder /app/packages/backend/dist ./dist
 COPY --from=builder /app/packages/widget/dist ./widget-dist
+RUN chown -R node:node /app
+USER node
 EXPOSE 3000
 CMD ["node", "dist/main.js"]
