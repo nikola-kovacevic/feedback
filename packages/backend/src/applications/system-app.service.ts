@@ -42,6 +42,13 @@ export class SystemAppService implements OnModuleInit {
     });
 
     if (existing) {
+      // Fix name if it was corrupted from a prior version
+      if (existing.name !== 'PulseLoop') {
+        existing.name = 'PulseLoop';
+        existing.description = 'Rate your experience with PulseLoop. Your feedback helps us improve.';
+        await this.applicationsRepository.save(existing);
+        this.logger.log(`System app name corrected to PulseLoop`);
+      }
       this.logger.log(`System app exists: ${existing.name} (${existing.apiKey})`);
       return;
     }

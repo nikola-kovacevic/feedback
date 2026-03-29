@@ -10,26 +10,42 @@ A self-hosted feedback analytics platform. Collect NPS-style feedback from your 
 - **Sentiment Analysis** — Automatic positive/negative/neutral classification using AFINN lexicon.
 - **Word Cloud** — TF-IDF keyword extraction from feedback comments.
 - **Cross-App Comparison** — Compare metrics across multiple registered applications.
-- **Top Performers** — Dashboard ranking of apps by average score with medals.
+- **Top Performers** — Dashboard ranking of apps by average score with medals, icons, and clickable links.
 - **Export** — CSV and JSON export with date and application filters.
 
-### Feedback Loop (Phase 2a)
+### Feedback Loop
 - **Feedback Tagging** — Tag feedback entries with categories (e.g., "performance", "bug", "onboarding"). Add/remove tags directly from the Responses table.
 - **Action Items** — Create action items tied to tags. Track completion with checkboxes. Manage from the Application Detail page.
-- **NPS Alerts** — Configure per-app Slack webhook alerts. Daily cron checks 7-day rolling NPS. Fires when NPS drops below your threshold.
-- **Resolve/Archive** — Mark feedback as resolved with a single click. Auto-archive entries older than 12 months via `POST /api/feedback/archive-old`.
-- **Weekly Digest** — Auto-generated "You Said, We Did" summary page per application. Shows weekly scores, top tags, completed action items, and recent comments. Shareable URL at `/api/digest/:appId/latest`. Weekly cron + on-demand generation.
+- **NPS Alerts** — Configure per-app Slack webhook alerts. Fires in real-time on every feedback submission when NPS drops below your threshold. Manual trigger via `POST /api/alerts/check`.
+- **Resolve/Archive** — Mark feedback as resolved with a single click. Auto-archive entries older than 12 months.
+- **Weekly Digest** — Auto-generated "You Said, We Did" summary page per application. Shows weekly scores, top tags, completed action items, and recent comments. Weekly cron + on-demand generation.
 
 ### Platform
-- **App Metadata** — Add a URL and icon to each application. Icon stored as base64 in the database (no file storage needed). App name links to the URL on the Applications page.
+- **App Metadata** — Add a URL and icon (max 256KB) to each application. Icon stored as base64. App name links to the URL on the Applications page.
+- **PulseLoop Self-Feedback** — Built-in system app for rating PulseLoop itself. Uses app branding, NPS visible to all users. Hidden from application management.
 - **Responsive Design** — Sidebar collapses on mobile with a burger menu button. Overlay dismisses sidebar on tap.
-- **Dark Mode** — System/Light/Dark theme toggle with glassmorphism UI. Full coverage for all Ant Design components including dropdowns, popovers, and date pickers.
-- **PulseLoop Self-Feedback** — Built-in system app for rating PulseLoop itself. Uses app branding, visible to all users.
-- **Real-Time NPS Alerts** — Threshold alerts fire on every feedback submission (not just daily cron). Manual trigger via `POST /api/alerts/check`.
-- **Password Policy** — Passwords require letters, numbers, and special characters.
-- **Password Management** — Change password from the Settings page with current password verification.
+- **Dark Mode** — System/Light/Dark theme toggle with glassmorphism UI. Full coverage for all Ant Design components.
+- **Security** — Tenant isolation (IDOR protection), XSS-safe digest rendering, SHA-256 refresh tokens, rate limiting on auth and widget endpoints.
+- **Password Policy** — Passwords require letters, numbers, and special characters. Change password with current password verification.
 - **Self-Hosted** — Single `docker compose up` deploys everything. No external dependencies.
 - **Design System** — Documented in [DESIGN.md](DESIGN.md): color palette, spacing scale, component patterns, dark mode rules, accessibility guidelines.
+
+## Screenshots
+
+![Dashboard](docs/screenshots/dashboard.png)
+*Dashboard with Top Performers, NPS analytics, score trends, keywords, and recent comments.*
+
+![Applications](docs/screenshots/applications.png)
+*Applications page with app icons, URLs, and descriptions.*
+
+![Responses](docs/screenshots/responses.png)
+*Responses table with sentiment tags, resolve buttons, and tag management.*
+
+![Application Detail](docs/screenshots/app-detail.png)
+*Application detail with embed code, action items, alert config, and digest.*
+
+![Export](docs/screenshots/export.png)
+*Export page with format selection and date filters.*
 
 ## Tech Stack
 
@@ -110,12 +126,12 @@ Frontend runs at [http://localhost:5173](http://localhost:5173) with API proxy t
 
 ## Widget Integration
 
-After registering an application in the dashboard, embed the widget in your app:
+After registering an application in the dashboard, copy the embed snippet from the Application Detail page. Or use the code below:
 
 ### Floating Mode
 
 ```html
-<script src="http://your-pulseloop-server:3000/widget/feedback.js"></script>
+<script src="http://your-pulseloop-server/widget/feedback.js"></script>
 <script>
   FeedbackWidget.init({
     apiKey: 'your-api-key',
@@ -127,7 +143,7 @@ After registering an application in the dashboard, embed the widget in your app:
 
 ```html
 <div id="feedback-container"></div>
-<script src="http://your-pulseloop-server:3000/widget/feedback.js"></script>
+<script src="http://your-pulseloop-server/widget/feedback.js"></script>
 <script>
   FeedbackWidget.render({
     apiKey: 'your-api-key',
@@ -154,13 +170,12 @@ Swagger UI is available at [http://localhost:3000/api/docs](http://localhost:300
 ## Testing
 
 ```bash
-# Start the app first (Docker or local dev)
-# Then run e2e tests against the running server:
+# Start the app first (Docker or local dev), then:
 cd packages/backend
 BASE_URL=http://localhost:3000 npx jest --config ./test/jest-e2e.json --forceExit --runInBand
 ```
 
-65 e2e tests covering: auth (register, login, refresh, password change), applications CRUD, widget API, feedback submission + tagging + resolve, action items CRUD, alert config, analytics (6 endpoints), export (CSV + JSON), weekly digest (generate, data, HTML, 404), multi-user isolation, and input validation.
+67 e2e tests covering: auth (register, login, refresh, password change, validation), applications CRUD, widget API, feedback submission + tagging + resolve, action items CRUD, alert config, analytics (6 endpoints), export (CSV + JSON), weekly digest, multi-user isolation, tenant scoping (403 on non-owned resources), and input validation.
 
 ## Project Structure
 
@@ -172,6 +187,7 @@ pulseloop/
 │   └── widget/        # Embeddable JS plugin
 ├── docker-compose.yml
 ├── .env.example
+├── DESIGN.md
 └── pnpm-workspace.yaml
 ```
 
@@ -188,12 +204,6 @@ pulseloop/
 | `CORS_ORIGIN` | http://localhost | Allowed origins for dashboard |
 | `BACKEND_URL` | http://localhost:3000 | Backend URL for embed snippets |
 | `TYPEORM_SYNC` | false | Set to `true` to auto-sync schema (dev only) |
-
-## Screenshots
-![Widget](image.png)
-![Dashboard](image-1.png)
-![Responses](image-2.png)
-![Exports](image-3.png)
 
 ## License
 
