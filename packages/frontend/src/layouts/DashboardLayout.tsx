@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Layout, Menu, Typography, Divider, Button } from 'antd';
-import { LogoutOutlined } from '@ant-design/icons';
+import { LogoutOutlined, MenuOutlined, CloseOutlined } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ThemeToggle from '../components/ThemeToggle';
@@ -37,6 +37,50 @@ const DashboardLayout: React.FC = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
+      {/* Burger menu button — visible when sidebar is collapsed on mobile */}
+      {collapsed && (
+        <Button
+          type="text"
+          icon={<MenuOutlined />}
+          onClick={() => setCollapsed(false)}
+          aria-label="Open navigation menu"
+          style={{
+            position: 'fixed',
+            top: 16,
+            left: 16,
+            zIndex: 20,
+            width: 40,
+            height: 40,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(53, 75, 140, 0.9)',
+            color: 'white',
+            borderRadius: 8,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            border: 'none',
+          }}
+        />
+      )}
+
+      {/* Overlay when sidebar is open on mobile */}
+      {!collapsed && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => setCollapsed(true)}
+          style={{
+            display: 'none', // shown via CSS media query
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.4)',
+            zIndex: 9,
+          }}
+        />
+      )}
+
       <Sider
         className="glass-sider"
         width={220}
@@ -58,26 +102,46 @@ const DashboardLayout: React.FC = () => {
             padding: '16px 0',
           }}
         >
-          <div style={{ padding: '12px 20px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img
-              src={logo}
-              alt="PulseLoop"
-              style={{ width: 32, height: 32, borderRadius: 6 }}
+          <div style={{ padding: '12px 20px 16px', display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <img
+                src={logo}
+                alt="PulseLoop"
+                style={{ width: 32, height: 32, borderRadius: 6 }}
+              />
+              <Title
+                level={4}
+                className="sidebar-brand"
+                style={{ margin: 0, color: 'rgba(255, 255, 255, 0.95)', whiteSpace: 'nowrap' }}
+              >
+                PulseLoop
+              </Title>
+            </div>
+            {/* Close button on mobile */}
+            <Button
+              type="text"
+              icon={<CloseOutlined />}
+              onClick={() => setCollapsed(true)}
+              className="sidebar-close-btn"
+              aria-label="Close navigation menu"
+              style={{
+                display: 'none', // shown via CSS media query
+                color: 'rgba(255,255,255,0.7)',
+                border: 'none',
+                padding: 4,
+              }}
             />
-            <Title
-              level={4}
-              className="sidebar-brand"
-              style={{ margin: 0, color: 'rgba(255, 255, 255, 0.95)', whiteSpace: 'nowrap' }}
-            >
-              PulseLoop
-            </Title>
           </div>
 
           <Menu
             mode="inline"
             selectedKeys={[selectedKey]}
             items={NAV_ITEMS}
-            onClick={({ key }) => navigate(key)}
+            onClick={({ key }) => {
+              navigate(key);
+              // Close sidebar on mobile after navigation
+              if (window.innerWidth < 768) setCollapsed(true);
+            }}
             style={{ border: 'none', flex: 1 }}
             aria-label="Page navigation"
           />

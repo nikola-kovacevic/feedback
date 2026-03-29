@@ -50,6 +50,15 @@ export class CreateApplicationDto {
   @MaxLength(2000)
   description?: string;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  appUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  icon?: string; // base64-encoded image, max ~500KB
+
   @ValidateNested()
   @Type(() => WidgetConfigDto)
   widgetConfig: WidgetConfigDto;
