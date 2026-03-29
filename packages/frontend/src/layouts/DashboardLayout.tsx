@@ -4,6 +4,7 @@ import { LogoutOutlined, MenuOutlined, CloseOutlined } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ThemeToggle from '../components/ThemeToggle';
+import SystemFeedbackWidget from '../components/SystemFeedbackWidget';
 import logo from '../assets/pulseloop.png';
 
 const { Sider, Content } = Layout;
@@ -200,6 +201,7 @@ const DashboardLayout: React.FC = () => {
           }}
         >
           <Outlet />
+          <SystemFeedbackWidget />
         </Content>
       </Layout>
     </Layout>

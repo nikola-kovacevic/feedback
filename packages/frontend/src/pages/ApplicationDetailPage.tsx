@@ -110,7 +110,7 @@ const ApplicationDetailPage: React.FC = () => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['application', id] });
+      queryClient.invalidateQueries({ queryKey: ['applications', id] });
       message.success('Alert config saved');
     },
     onError: () => message.error('Failed to save alert config'),
@@ -264,6 +264,10 @@ const ApplicationDetailPage: React.FC = () => {
               accept="image/*"
               showUploadList={false}
               beforeUpload={(file) => {
+                if (file.size > 256 * 1024) {
+                  message.error('Icon must be under 256KB');
+                  return false;
+                }
                 const reader = new FileReader();
                 reader.onload = () => {
                   setEditIcon(reader.result as string);
@@ -300,7 +304,14 @@ const ApplicationDetailPage: React.FC = () => {
               if (!id) return;
               updateApp.mutate(
                 { id, appUrl: editAppUrl || null, icon: editIcon },
-                { onSuccess: () => message.success('App settings saved'), onError: () => message.error('Failed to save settings') }
+                {
+                  onSuccess: () => message.success('App settings saved'),
+                  onError: (err: any) => {
+                    const msgs = err?.response?.data?.message;
+                    const text = Array.isArray(msgs) ? msgs.join('. ') : (msgs || 'Failed to save settings');
+                    message.error(text, 6);
+                  },
+                }
               );
             }}
           >

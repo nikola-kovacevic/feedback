@@ -89,6 +89,10 @@ const NewApplicationPage: React.FC = () => {
               accept="image/*"
               showUploadList={false}
               beforeUpload={(file) => {
+                if (file.size > 256 * 1024) {
+                  message.error('Icon must be under 256KB');
+                  return false;
+                }
                 const reader = new FileReader();
                 reader.onload = () => {
                   setIconBase64(reader.result as string);
