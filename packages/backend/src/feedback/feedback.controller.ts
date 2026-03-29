@@ -79,7 +79,7 @@ export class FeedbackController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Post('feedback/archive-old')
-  archiveOld() {
-    return this.feedbackService.archiveOld();
+  archiveOld(@Request() req: { user: { id: string } }) {
+    return this.feedbackService.archiveOld(req.user.id);
   }
 }

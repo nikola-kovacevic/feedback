@@ -478,7 +478,7 @@ describe('PulseLoop Full Flow (e2e)', () => {
         body: JSON.stringify({
           alertConfig: {
             enabled: true,
-            slackUrl: 'https://hooks.slack.com/test',
+            slackUrl: 'https://hooks.slack.com/services/TTEST/BTEST/testplaceholder',
             npsThreshold: 50,
           },
         }),

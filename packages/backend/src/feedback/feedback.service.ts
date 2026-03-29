@@ -135,7 +135,7 @@ export class FeedbackService {
     return this.feedbackRepository.save(feedback);
   }
 
-  async archiveOld() {
+  async archiveOld(userId: string) {
     const twelveMonthsAgo = new Date();
     twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
 
@@ -143,8 +143,9 @@ export class FeedbackService {
       .createQueryBuilder()
       .update(FeedbackResponse)
       .set({ archivedAt: new Date() })
-      .where('createdAt < :cutoff', { cutoff: twelveMonthsAgo })
-      .andWhere('archivedAt IS NULL')
+      .where('"createdAt" < :cutoff', { cutoff: twelveMonthsAgo })
+      .andWhere('"archivedAt" IS NULL')
+      .andWhere(`"applicationId" IN (SELECT id FROM applications WHERE "createdById" = :userId)`, { userId })
       .execute();
 
     return { archived: result.affected || 0 };

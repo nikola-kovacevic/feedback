@@ -30,7 +30,7 @@ services:
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
       BACKEND_URL: ${BACKEND_URL:-http://localhost:3000}
-      TYPEORM_SYNC: "true"
+      TYPEORM_SYNC: ${TYPEORM_SYNC:-true}  # Set to false after initial deployment
       NODE_ENV: production
     ports:
       - "3000:3000"
@@ -43,7 +43,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "80:80"
+      - "80:8080"
 
 volumes:
   postgres_data:
