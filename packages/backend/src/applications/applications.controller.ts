@@ -21,12 +21,15 @@ export class ApplicationsController {
 
   @Get('system')
   async getSystemApp(@Request() req: { user: { id: string } }) {
-    const app = await this.systemAppService.getSystemApp();
-    if (!app) {
-      // Create on first request with the first user
-      return this.systemAppService.ensureSystemAppWithUser(req.user.id);
-    }
-    return app;
+    const app = await this.systemAppService.getSystemApp()
+      ?? await this.systemAppService.ensureSystemAppWithUser(req.user.id);
+    // Only expose what the widget needs, not the full app object
+    return {
+      id: app.id,
+      name: app.name,
+      apiKey: app.apiKey,
+      widgetConfig: app.widgetConfig,
+    };
   }
 
   @Post()

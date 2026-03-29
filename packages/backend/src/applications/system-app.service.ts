@@ -2,6 +2,8 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import * as fs from 'fs';
+import * as path from 'path';
 import { Application } from './application.entity';
 
 @Injectable()
@@ -15,6 +17,23 @@ export class SystemAppService implements OnModuleInit {
 
   async onModuleInit() {
     await this.ensureSystemApp();
+  }
+
+  private loadSystemIcon(): string | null {
+    // Try multiple paths (local dev vs Docker)
+    const candidates = [
+      path.join(__dirname, '..', '..', '..', 'frontend', 'public', 'favicon.png'),
+      path.join(__dirname, '..', '..', '..', 'frontend', 'src', 'assets', 'pulseloop.png'),
+    ];
+    for (const p of candidates) {
+      try {
+        if (fs.existsSync(p)) {
+          const buf = fs.readFileSync(p);
+          return `data:image/png;base64,${buf.toString('base64')}`;
+        }
+      } catch { /* ignore */ }
+    }
+    return null;
   }
 
   private async ensureSystemApp() {
@@ -31,16 +50,17 @@ export class SystemAppService implements OnModuleInit {
       name: 'PulseLoop',
       description: 'Rate your experience with PulseLoop. Your feedback helps us improve.',
       isSystem: true,
+      // icon: frontend uses imported pulseloop.png for system apps
       apiKey: `fbk_system_${uuidv4().replace(/-/g, '').slice(0, 24)}`,
       widgetConfig: {
         mode: 'floating',
         question: 'How would you rate your PulseLoop experience?',
         commentRequired: false,
         themeColor: '#0eb4a1',
-        cooldownHours: 168, // once per week
+        cooldownHours: 168,
         position: 'bottom-right',
       },
-      createdById: '00000000-0000-0000-0000-000000000000', // system user placeholder
+      createdById: '00000000-0000-0000-0000-000000000000',
     });
 
     try {
@@ -66,6 +86,7 @@ export class SystemAppService implements OnModuleInit {
       name: 'PulseLoop',
       description: 'Rate your experience with PulseLoop. Your feedback helps us improve.',
       isSystem: true,
+      // icon: frontend uses imported pulseloop.png for system apps
       apiKey: `fbk_system_${uuidv4().replace(/-/g, '').slice(0, 24)}`,
       widgetConfig: {
         mode: 'floating',

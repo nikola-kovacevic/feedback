@@ -3,6 +3,7 @@ import { Typography, Skeleton, Empty, theme } from 'antd';
 import { TrophyOutlined } from '@ant-design/icons';
 import GlassCard from './GlassCard';
 import type { ComparisonItem, Application } from '../types';
+import pulseloopLogo from '../assets/pulseloop.png';
 
 const { Title, Text } = Typography;
 
@@ -47,7 +48,8 @@ const TopPerformers: React.FC<TopPerformersProps> = ({ data, applications, loadi
         <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
           {sorted.map((item, idx) => {
             const app = appMap.get(item.applicationId);
-            const icon = app?.icon;
+            const isSystem = app?.isSystem;
+            const icon = isSystem ? pulseloopLogo : app?.icon;
             const appUrl = app?.appUrl;
 
             return (
