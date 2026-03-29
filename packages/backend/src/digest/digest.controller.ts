@@ -1,8 +1,18 @@
-import { Controller, Get, Post, Param, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Res, UseGuards, Request } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ApplicationOwnershipService } from '../applications/application-ownership.guard';
 import { DigestService, DigestData } from './digest.service';
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 function renderDigestHtml(digest: DigestData): string {
   const scoreColor = (s: number) => s >= 9 ? '#2D733E' : s >= 7 ? '#354B8C' : '#D93A2B';
@@ -15,7 +25,7 @@ function renderDigestHtml(digest: DigestData): string {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PulseLoop Digest: ${digest.appName}</title>
+<title>PulseLoop Digest: ${escapeHtml(digest.appName)}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0eeec; color: #1a1a2e; padding: 24px; }
@@ -48,7 +58,7 @@ function renderDigestHtml(digest: DigestData): string {
 <body>
 <div class="container">
   <div class="header">
-    <h1>${digest.appName}</h1>
+    <h1>${escapeHtml(digest.appName)}</h1>
     <p>Weekly Digest: ${periodStart} - ${periodEnd}</p>
   </div>
 
@@ -74,7 +84,7 @@ function renderDigestHtml(digest: DigestData): string {
   <div class="card">
     <h2>Top Tags</h2>
     <div class="tag-list">
-      ${digest.topTags.map(t => `<span class="tag">${t.tag}<span class="count">(${t.count})</span></span>`).join('')}
+      ${digest.topTags.map(t => `<span class="tag">${escapeHtml(t.tag)}<span class="count">(${t.count})</span></span>`).join('')}
     </div>
   </div>` : ''}
 
@@ -84,8 +94,8 @@ function renderDigestHtml(digest: DigestData): string {
     ${digest.completedActions.map(a => `
     <div class="action">
       <span class="check">&#10003;</span>
-      <span class="text">${a.text}</span>
-      ${a.tag ? `<span class="action-tag">${a.tag}</span>` : ''}
+      <span class="text">${escapeHtml(a.text)}</span>
+      ${a.tag ? `<span class="action-tag">${escapeHtml(a.tag)}</span>` : ''}
     </div>`).join('')}
   </div>` : ''}
 
@@ -95,7 +105,7 @@ function renderDigestHtml(digest: DigestData): string {
     ${digest.recentComments.map(c => `
     <div class="comment">
       <span class="score-badge" style="background: ${scoreColor(c.score)}20; color: ${scoreColor(c.score)}">${c.score}/10</span>
-      <span class="text">"${c.comment}"</span>
+      <span class="text">"${escapeHtml(c.comment)}"</span>
     </div>`).join('')}
   </div>` : ''}
 
@@ -112,17 +122,24 @@ function renderDigestHtml(digest: DigestData): string {
 @ApiTags('digest')
 @Controller('api/digest')
 export class DigestController {
-  constructor(private digestService: DigestService) {}
+  constructor(
+    private digestService: DigestService,
+    private ownershipService: ApplicationOwnershipService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Post(':appId/generate')
-  async generate(@Param('appId') appId: string) {
+  async generate(@Param('appId') appId: string, @Request() req: { user: { id: string } }) {
+    await this.ownershipService.verifyOwnership(appId, req.user.id);
     return this.digestService.generateDigest(appId);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @Get(':appId/latest')
-  async getLatestHtml(@Param('appId') appId: string, @Res() res: Response) {
+  async getLatestHtml(@Param('appId') appId: string, @Request() req: { user: { id: string } }, @Res() res: Response) {
+    await this.ownershipService.verifyOwnership(appId, req.user.id);
     let digest = this.digestService.getLatestDigest(appId);
     if (!digest) {
       digest = await this.digestService.generateDigest(appId);
@@ -131,10 +148,20 @@ export class DigestController {
     res.send(renderDigestHtml(digest));
   }
 
+  @Get(':appId/latest/public')
+  async getPublicHtml(
+    @Param('appId') appId: string,
+    @Res() res: Response,
+  ) {
+    // Public endpoint deliberately removed. Use the authenticated /latest endpoint.
+    res.status(403).json({ message: 'Digest sharing requires authentication. Use the dashboard to view digests.' });
+  }
+
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Get(':appId/data')
-  async getLatestData(@Param('appId') appId: string) {
+  async getLatestData(@Param('appId') appId: string, @Request() req: { user: { id: string } }) {
+    await this.ownershipService.verifyOwnership(appId, req.user.id);
     let digest = this.digestService.getLatestDigest(appId);
     if (!digest) {
       digest = await this.digestService.generateDigest(appId);

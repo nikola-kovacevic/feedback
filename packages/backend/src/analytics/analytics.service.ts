@@ -16,30 +16,29 @@ export class AnalyticsService {
   private applyFilters(
     qb: SelectQueryBuilder<FeedbackResponse>,
     query: AnalyticsQueryDto,
+    userId: string,
   ) {
+    qb.innerJoin('f.application', 'app')
+      .andWhere('app.createdById = :userId', { userId });
+
     if (query.applicationId) {
-      qb.andWhere('f.applicationId = :applicationId', {
-        applicationId: query.applicationId,
-      });
+      qb.andWhere('f.applicationId = :applicationId', { applicationId: query.applicationId });
     }
     if (query.dateFrom) {
       qb.andWhere('f.createdAt >= :dateFrom', { dateFrom: query.dateFrom });
     }
     if (query.dateTo) {
       qb.andWhere('f.createdAt < :dateTo', {
-        dateTo: new Date(
-          new Date(query.dateTo).getTime() + 86400000,
-        ).toISOString(),
+        dateTo: new Date(new Date(query.dateTo).getTime() + 86400000).toISOString(),
       });
     }
     return qb;
   }
 
-  async getSummary(query: AnalyticsQueryDto) {
+  async getSummary(query: AnalyticsQueryDto, userId: string) {
     const qb = this.feedbackRepository.createQueryBuilder('f');
-    this.applyFilters(qb, query);
+    this.applyFilters(qb, query, userId);
 
-    // NPS calculated entirely in SQL — no in-memory loading
     const result = await qb
       .select('AVG(f.score)', 'averageScore')
       .addSelect('COUNT(*)', 'totalResponses')
@@ -50,21 +49,14 @@ export class AnalyticsService {
     const total = parseInt(result.totalResponses) || 0;
     const promoters = parseInt(result.promoters) || 0;
     const detractors = parseInt(result.detractors) || 0;
-    const npsScore =
-      total > 0
-        ? Math.round(((promoters - detractors) / total) * 100)
-        : 0;
+    const npsScore = total > 0 ? Math.round(((promoters - detractors) / total) * 100) : 0;
 
-    return {
-      averageScore: parseFloat(result.averageScore) || 0,
-      npsScore,
-      totalResponses: total,
-    };
+    return { averageScore: parseFloat(result.averageScore) || 0, npsScore, totalResponses: total };
   }
 
-  async getDistribution(query: AnalyticsQueryDto) {
+  async getDistribution(query: AnalyticsQueryDto, userId: string) {
     const qb = this.feedbackRepository.createQueryBuilder('f');
-    this.applyFilters(qb, query);
+    this.applyFilters(qb, query, userId);
 
     const results = await qb
       .select('f.score', 'score')
@@ -73,27 +65,17 @@ export class AnalyticsService {
       .orderBy('f.score', 'ASC')
       .getRawMany();
 
-    const distribution = Array.from({ length: 11 }, (_, i) => ({
-      score: i,
-      count: 0,
-    }));
-    results.forEach((r) => {
-      distribution[r.score].count = parseInt(r.count);
-    });
+    const distribution = Array.from({ length: 11 }, (_, i) => ({ score: i, count: 0 }));
+    results.forEach((r) => { distribution[r.score].count = parseInt(r.count); });
     return distribution;
   }
 
-  async getTrends(query: AnalyticsQueryDto) {
+  async getTrends(query: AnalyticsQueryDto, userId: string) {
     const granularity = query.granularity || 'daily';
-    const truncTo =
-      granularity === 'monthly'
-        ? 'month'
-        : granularity === 'weekly'
-          ? 'week'
-          : 'day';
+    const truncTo = granularity === 'monthly' ? 'month' : granularity === 'weekly' ? 'week' : 'day';
 
     const qb = this.feedbackRepository.createQueryBuilder('f');
-    this.applyFilters(qb, query);
+    this.applyFilters(qb, query, userId);
 
     const results = await qb
       .select(`DATE_TRUNC('${truncTo}', f."createdAt")`, 'period')
@@ -110,9 +92,9 @@ export class AnalyticsService {
     }));
   }
 
-  async getSentimentBreakdown(query: AnalyticsQueryDto) {
+  async getSentimentBreakdown(query: AnalyticsQueryDto, userId: string) {
     const qb = this.feedbackRepository.createQueryBuilder('f');
-    this.applyFilters(qb, query);
+    this.applyFilters(qb, query, userId);
 
     const results = await qb
       .select('f.sentiment', 'sentiment')
@@ -127,31 +109,29 @@ export class AnalyticsService {
     return breakdown;
   }
 
-  async getWordCloud(query: AnalyticsQueryDto) {
+  async getWordCloud(query: AnalyticsQueryDto, userId: string) {
     const qb = this.feedbackRepository.createQueryBuilder('f');
-    this.applyFilters(qb, query);
+    this.applyFilters(qb, query, userId);
     qb.andWhere('f.comment IS NOT NULL');
-    qb.take(1000); // Cap to prevent memory issues
+    qb.take(1000);
 
     const feedbacks = await qb.getMany();
     const comments = feedbacks.map((f) => f.comment).filter(Boolean);
-
     return this.sentimentService.extractKeywords(comments, 30);
   }
 
-  async getComparison(query: AnalyticsQueryDto) {
+  async getComparison(query: AnalyticsQueryDto, userId: string) {
     const qb = this.feedbackRepository
       .createQueryBuilder('f')
-      .leftJoin('f.application', 'app');
+      .innerJoin('f.application', 'app')
+      .where('app.createdById = :userId', { userId });
 
     if (query.dateFrom) {
       qb.andWhere('f.createdAt >= :dateFrom', { dateFrom: query.dateFrom });
     }
     if (query.dateTo) {
       qb.andWhere('f.createdAt < :dateTo', {
-        dateTo: new Date(
-          new Date(query.dateTo).getTime() + 86400000,
-        ).toISOString(),
+        dateTo: new Date(new Date(query.dateTo).getTime() + 86400000).toISOString(),
       });
     }
 

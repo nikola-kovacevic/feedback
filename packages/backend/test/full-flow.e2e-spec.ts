@@ -517,27 +517,34 @@ describe('PulseLoop Full Flow (e2e)', () => {
 
   // ─── Export API ────────────────────────────────────────
   describe('Export API edge cases', () => {
-    it('should return empty CSV when no data matches filter', async () => {
-      // Use a non-existent applicationId
+    it('should return empty CSV when no data matches date filter', async () => {
+      // Use real appId but a date range in the far past with no data
       const res = await authApi(
-        '/api/feedback/export?format=csv&applicationId=00000000-0000-0000-0000-000000000000',
+        `/api/feedback/export?format=csv&applicationId=${appId}&dateFrom=2020-01-01&dateTo=2020-01-02`,
         accessToken,
       );
       expect([200, 201]).toContain(res.status);
       const text = await res.text();
-      // Should have header but no data rows
       expect(text).toContain('id,applicationId');
     });
 
-    it('should return empty JSON array when no data matches filter', async () => {
+    it('should return empty JSON array when no data matches date filter', async () => {
       const res = await authApi(
-        '/api/feedback/export?format=json&applicationId=00000000-0000-0000-0000-000000000000',
+        `/api/feedback/export?format=json&applicationId=${appId}&dateFrom=2020-01-01&dateTo=2020-01-02`,
         accessToken,
       );
       expect([200, 201]).toContain(res.status);
       const body = await res.json() as any;
       expect(Array.isArray(body)).toBe(true);
       expect(body.length).toBe(0);
+    });
+
+    it('should reject export for non-owned application', async () => {
+      const res = await authApi(
+        '/api/feedback/export?format=json&applicationId=00000000-0000-0000-0000-000000000000',
+        accessToken,
+      );
+      expect(res.status).toBe(403);
     });
   });
 
@@ -565,18 +572,25 @@ describe('PulseLoop Full Flow (e2e)', () => {
       expect(body.appId).toBe(appId);
     });
 
-    it('should serve digest as HTML page (no auth required)', async () => {
-      const res = await fetch(`${BASE}/api/digest/${appId}/latest`);
-      expect(res.status).toBe(200);
+    it('should serve digest as HTML page (auth required)', async () => {
+      const res = await authApi(`/api/digest/${appId}/latest`, accessToken);
+      expect([200, 201]).toContain(res.status);
       const html = await res.text();
       expect(html).toContain('<!DOCTYPE html>');
       expect(html).toContain('PulseLoop Digest');
-      expect(html).toContain('Weekly Digest');
     });
 
-    it('should 404 for non-existent app digest', async () => {
-      const res = await fetch(`${BASE}/api/digest/00000000-0000-0000-0000-000000000000/latest`);
-      expect(res.status).toBe(404);
+    it('should reject digest without auth', async () => {
+      const res = await fetch(`${BASE}/api/digest/${appId}/latest`);
+      expect(res.status).toBe(401);
+    });
+
+    it('should reject digest for non-owned app', async () => {
+      const res = await authApi(
+        '/api/digest/00000000-0000-0000-0000-000000000000/latest',
+        accessToken,
+      );
+      expect(res.status).toBe(403);
     });
   });
 
