@@ -13,6 +13,7 @@ import { WidgetModule } from './widget/widget.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { ActionItemsModule } from './action-items/action-items.module';
 import { AlertModule } from './alert/alert.module';
+import { DigestModule } from './digest/digest.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AlertModule } from './alert/alert.module';
     AnalyticsModule,
     ActionItemsModule,
     AlertModule,
+    DigestModule,
   ],
 })
 export class AppModule {}

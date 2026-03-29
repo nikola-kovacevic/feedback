@@ -25,7 +25,7 @@ import client from '../api/client';
 import type { ActionItem } from '../types';
 import dayjs from 'dayjs';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const ApplicationDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -337,6 +337,40 @@ const ApplicationDetailPage: React.FC = () => {
             Save Alert Config
           </Button>
         </Space>
+      </GlassCard>
+
+      {/* Weekly Digest */}
+      <GlassCard>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <Title level={5} style={{ margin: 0 }}>Weekly Digest</Title>
+            <Text type="secondary" style={{ fontSize: 13 }}>
+              A shareable summary of this week's scores, tags, and completed actions.
+            </Text>
+          </div>
+          <Space>
+            <Button
+              onClick={() => {
+                window.open(`${window.location.protocol}//${window.location.hostname}:3000/api/digest/${id}/latest`, '_blank');
+              }}
+            >
+              View Digest
+            </Button>
+            <Button
+              type="primary"
+              onClick={async () => {
+                try {
+                  await client.post(`/digest/${id}/generate`);
+                  message.success('Digest generated');
+                } catch {
+                  message.error('Failed to generate digest');
+                }
+              }}
+            >
+              Generate Now
+            </Button>
+          </Space>
+        </div>
       </GlassCard>
     </div>
   );
