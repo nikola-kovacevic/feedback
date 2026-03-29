@@ -14,9 +14,7 @@ const EmbedSnippet: React.FC<EmbedSnippetProps> = ({ apiKey, mode = 'floating' }
   const { message } = App.useApp();
   const [copied, setCopied] = useState(false);
 
-  const backendOrigin = window.location.port === '80' || window.location.port === ''
-    ? `${window.location.protocol}//${window.location.hostname}:3000`
-    : `${window.location.protocol}//${window.location.hostname}:3000`;
+  const backendOrigin = window.location.origin;
 
   const snippet = mode === 'floating'
     ? `<script src="${backendOrigin}/widget/feedback.js"></script>

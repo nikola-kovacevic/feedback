@@ -351,7 +351,7 @@ const ApplicationDetailPage: React.FC = () => {
           <Space>
             <Button
               onClick={() => {
-                window.open(`${window.location.protocol}//${window.location.hostname}:3000/api/digest/${id}/latest`, '_blank');
+                window.open(`${window.location.origin}/api/digest/${id}/latest`, '_blank');
               }}
             >
               View Digest
