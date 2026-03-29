@@ -541,6 +541,45 @@ describe('PulseLoop Full Flow (e2e)', () => {
     });
   });
 
+  // ─── Digest ────────────────────────────────────────────
+  describe('Weekly Digest', () => {
+    it('should generate a digest for the application', async () => {
+      const res = await authApi(`/api/digest/${appId}/generate`, accessToken, {
+        method: 'POST',
+      });
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.appName).toBeDefined();
+      expect(body.totalResponses).toBeGreaterThanOrEqual(0);
+      expect(typeof body.averageScore).toBe('number');
+      expect(typeof body.npsScore).toBe('number');
+      expect(Array.isArray(body.topTags)).toBe(true);
+      expect(Array.isArray(body.completedActions)).toBe(true);
+      expect(Array.isArray(body.recentComments)).toBe(true);
+    });
+
+    it('should return digest data as JSON', async () => {
+      const res = await authApi(`/api/digest/${appId}/data`, accessToken);
+      expect([200, 201]).toContain(res.status);
+      const body = await res.json() as any;
+      expect(body.appId).toBe(appId);
+    });
+
+    it('should serve digest as HTML page (no auth required)', async () => {
+      const res = await fetch(`${BASE}/api/digest/${appId}/latest`);
+      expect(res.status).toBe(200);
+      const html = await res.text();
+      expect(html).toContain('<!DOCTYPE html>');
+      expect(html).toContain('PulseLoop Digest');
+      expect(html).toContain('Weekly Digest');
+    });
+
+    it('should 404 for non-existent app digest', async () => {
+      const res = await fetch(`${BASE}/api/digest/00000000-0000-0000-0000-000000000000/latest`);
+      expect(res.status).toBe(404);
+    });
+  });
+
   // ─── Archive Old Feedback ─────────────────────────────
   describe('Archive Old Feedback', () => {
     it('should call archive-old endpoint without error', async () => {

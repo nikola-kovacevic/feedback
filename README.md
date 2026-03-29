@@ -18,6 +18,7 @@ A self-hosted feedback analytics platform. Collect NPS-style feedback from your 
 - **Action Items** — Create action items tied to tags. Track completion with checkboxes. Manage from the Application Detail page.
 - **NPS Alerts** — Configure per-app Slack webhook alerts. Daily cron checks 7-day rolling NPS. Fires when NPS drops below your threshold.
 - **Resolve/Archive** — Mark feedback as resolved with a single click. Auto-archive entries older than 12 months via `POST /api/feedback/archive-old`.
+- **Weekly Digest** — Auto-generated "You Said, We Did" summary page per application. Shows weekly scores, top tags, completed action items, and recent comments. Shareable URL at `/api/digest/:appId/latest`. Weekly cron + on-demand generation.
 
 ### Platform
 - **Dark Mode** — System/Light/Dark theme toggle with glassmorphism UI. Full coverage for all Ant Design components including dropdowns, popovers, and date pickers.
@@ -154,7 +155,7 @@ cd packages/backend
 BASE_URL=http://localhost:3000 npx jest --config ./test/jest-e2e.json --forceExit --runInBand
 ```
 
-61 e2e tests covering: auth (register, login, refresh, password change), applications CRUD, widget API, feedback submission + tagging + resolve, action items CRUD, alert config, analytics (6 endpoints), export (CSV + JSON), multi-user isolation, and input validation.
+65 e2e tests covering: auth (register, login, refresh, password change), applications CRUD, widget API, feedback submission + tagging + resolve, action items CRUD, alert config, analytics (6 endpoints), export (CSV + JSON), weekly digest (generate, data, HTML, 404), multi-user isolation, and input validation.
 
 ## Project Structure
 
