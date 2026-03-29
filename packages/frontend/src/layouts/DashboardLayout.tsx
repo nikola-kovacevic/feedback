@@ -4,6 +4,7 @@ import { LogoutOutlined, MenuOutlined, CloseOutlined } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ThemeToggle from '../components/ThemeToggle';
+import SystemFeedbackWidget from '../components/SystemFeedbackWidget';
 import logo from '../assets/pulseloop.png';
 
 const { Sider, Content } = Layout;
@@ -103,7 +104,12 @@ const DashboardLayout: React.FC = () => {
           }}
         >
           <div style={{ padding: '12px 20px 16px', display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+              onClick={() => navigate('/')}
+              role="button"
+              aria-label="Go to dashboard"
+            >
               <img
                 src={logo}
                 alt="PulseLoop"
@@ -195,6 +201,7 @@ const DashboardLayout: React.FC = () => {
           }}
         >
           <Outlet />
+          <SystemFeedbackWidget />
         </Content>
       </Layout>
     </Layout>

@@ -19,6 +19,7 @@ export interface WidgetConfig {
 export interface Application {
   id: string;
   name: string;
+  isSystem: boolean;
   description: string;
   appUrl: string | null;
   icon: string | null;

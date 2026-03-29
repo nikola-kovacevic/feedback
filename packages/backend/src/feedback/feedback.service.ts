@@ -5,6 +5,7 @@ import { FeedbackResponse, Sentiment } from './feedback-response.entity';
 import { ApplicationsService } from '../applications/applications.service';
 import { ApplicationOwnershipService } from '../applications/application-ownership.guard';
 import { SentimentService } from '../sentiment/sentiment.service';
+import { AlertService } from '../alert/alert.service';
 import { SubmitFeedbackDto } from './dto/submit-feedback.dto';
 import { QueryFeedbackDto } from './dto/query-feedback.dto';
 
@@ -16,6 +17,7 @@ export class FeedbackService {
     private applicationsService: ApplicationsService,
     private ownershipService: ApplicationOwnershipService,
     private sentimentService: SentimentService,
+    private alertService: AlertService,
   ) {}
 
   async submit(dto: SubmitFeedbackDto) {
@@ -39,7 +41,12 @@ export class FeedbackService {
       userMetadata: dto.userMetadata,
     });
 
-    return this.feedbackRepository.save(feedback);
+    const saved = await this.feedbackRepository.save(feedback);
+
+    // Check alert threshold in background (don't block response)
+    this.alertService.checkSingleApp(application.id).catch(() => {});
+
+    return saved;
   }
 
   async findAll(query: QueryFeedbackDto, userId: string) {

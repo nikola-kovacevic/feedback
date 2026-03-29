@@ -17,8 +17,10 @@ const RegisterPage: React.FC = () => {
     try {
       await register(values.name, values.email, values.password);
       navigate('/');
-    } catch {
-      message.error('Registration failed. Please try again.');
+    } catch (err: any) {
+      const msgs = err?.response?.data?.message;
+      const errorText = Array.isArray(msgs) ? msgs.join('. ') : (msgs || 'Registration failed. Please try again.');
+      message.error(errorText, 6);
     } finally {
       setLoading(false);
     }

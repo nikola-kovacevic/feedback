@@ -57,7 +57,8 @@ export class CreateApplicationDto {
 
   @IsOptional()
   @IsString()
-  icon?: string; // base64-encoded image, max ~500KB
+  @MaxLength(350000) // ~256KB base64-encoded
+  icon?: string;
 
   @ValidateNested()
   @Type(() => WidgetConfigDto)

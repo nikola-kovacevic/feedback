@@ -29,6 +29,9 @@ export class Application {
   @Column({ type: 'varchar', length: 255 })
   name: string;
 
+  @Column({ type: 'boolean', default: false })
+  isSystem: boolean;
+
   @Column({ type: 'text', nullable: true })
   description: string;
 

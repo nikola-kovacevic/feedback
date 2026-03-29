@@ -32,7 +32,7 @@ export class ApplicationsService {
 
   async findAll(userId: string): Promise<Application[]> {
     return this.repo.find({
-      where: { createdById: userId },
+      where: { createdById: userId, isSystem: false },
       order: { createdAt: 'DESC' },
     });
   }
@@ -40,6 +40,9 @@ export class ApplicationsService {
   async findOne(id: string, userId: string): Promise<Application> {
     const app = await this.repo.findOne({ where: { id, createdById: userId } });
     if (!app) {
+      throw new NotFoundException('Application not found');
+    }
+    if (app.isSystem) {
       throw new NotFoundException('Application not found');
     }
     return app;

@@ -54,6 +54,34 @@ export class AlertService {
     this.logger.log(`Threshold check complete. ${alertsSent} alert(s) sent.`);
   }
 
+  async checkSingleApp(appId: string) {
+    const app = await this.applicationsRepository.findOne({ where: { id: appId } });
+    if (!app?.alertConfig?.enabled || !app?.alertConfig?.slackUrl) return;
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const result = await this.feedbackRepository
+      .createQueryBuilder('f')
+      .select('COUNT(*)', 'total')
+      .addSelect('COUNT(*) FILTER (WHERE f.score >= 9)', 'promoters')
+      .addSelect('COUNT(*) FILTER (WHERE f.score <= 6)', 'detractors')
+      .where('f.applicationId = :appId', { appId })
+      .andWhere('f.createdAt >= :since', { since: sevenDaysAgo })
+      .getRawOne();
+
+    const total = parseInt(result.total) || 0;
+    if (total === 0) return;
+
+    const promoters = parseInt(result.promoters) || 0;
+    const detractors = parseInt(result.detractors) || 0;
+    const nps = Math.round(((promoters - detractors) / total) * 100);
+
+    if (nps < app.alertConfig.npsThreshold) {
+      await this.sendSlackAlert(app, nps, total);
+    }
+  }
+
   private async sendSlackAlert(app: Application, nps: number, responseCount: number) {
     try {
       await fetch(app.alertConfig!.slackUrl, {
