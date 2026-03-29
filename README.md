@@ -24,6 +24,9 @@ A self-hosted feedback analytics platform. Collect NPS-style feedback from your 
 - **App Metadata** — Add a URL and icon to each application. Icon stored as base64 in the database (no file storage needed). App name links to the URL on the Applications page.
 - **Responsive Design** — Sidebar collapses on mobile with a burger menu button. Overlay dismisses sidebar on tap.
 - **Dark Mode** — System/Light/Dark theme toggle with glassmorphism UI. Full coverage for all Ant Design components including dropdowns, popovers, and date pickers.
+- **PulseLoop Self-Feedback** — Built-in system app for rating PulseLoop itself. Uses app branding, visible to all users.
+- **Real-Time NPS Alerts** — Threshold alerts fire on every feedback submission (not just daily cron). Manual trigger via `POST /api/alerts/check`.
+- **Password Policy** — Passwords require letters, numbers, and special characters.
 - **Password Management** — Change password from the Settings page with current password verification.
 - **Self-Hosted** — Single `docker compose up` deploys everything. No external dependencies.
 - **Design System** — Documented in [DESIGN.md](DESIGN.md): color palette, spacing scale, component patterns, dark mode rules, accessibility guidelines.

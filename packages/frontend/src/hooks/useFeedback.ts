@@ -19,5 +19,8 @@ export function useFeedback(filters: FeedbackFilters) {
       const { data } = await client.get('/feedback', { params });
       return data;
     },
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 }

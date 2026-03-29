@@ -5,6 +5,7 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApplicationsService } from './applications.service';
+import { SystemAppService } from './system-app.service';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationDto } from './dto/update-application.dto';
 
@@ -13,7 +14,20 @@ import { UpdateApplicationDto } from './dto/update-application.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('api/applications')
 export class ApplicationsController {
-  constructor(private readonly applicationsService: ApplicationsService) {}
+  constructor(
+    private readonly applicationsService: ApplicationsService,
+    private readonly systemAppService: SystemAppService,
+  ) {}
+
+  @Get('system')
+  async getSystemApp(@Request() req: { user: { id: string } }) {
+    const app = await this.systemAppService.getSystemApp();
+    if (!app) {
+      // Create on first request with the first user
+      return this.systemAppService.ensureSystemAppWithUser(req.user.id);
+    }
+    return app;
+  }
 
   @Post()
   create(

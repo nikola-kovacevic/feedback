@@ -103,7 +103,12 @@ const DashboardLayout: React.FC = () => {
           }}
         >
           <div style={{ padding: '12px 20px 16px', display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+              onClick={() => navigate('/')}
+              role="button"
+              aria-label="Go to dashboard"
+            >
               <img
                 src={logo}
                 alt="PulseLoop"

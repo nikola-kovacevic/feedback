@@ -97,7 +97,7 @@ const DashboardPage: React.FC = () => {
         onExport={() => navigate('/export')}
       />
 
-      <TopPerformers data={comparison} loading={comparisonLoading} />
+      <TopPerformers data={comparison} applications={apps} loading={comparisonLoading} />
 
       <SummaryCards data={summary} loading={summaryLoading || appsLoading} />
 

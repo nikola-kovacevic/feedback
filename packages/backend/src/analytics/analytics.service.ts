@@ -124,7 +124,7 @@ export class AnalyticsService {
     const qb = this.feedbackRepository
       .createQueryBuilder('f')
       .innerJoin('f.application', 'app')
-      .where('app.createdById = :userId', { userId });
+      .where('(app.createdById = :userId OR app.isSystem = true)', { userId });
 
     if (query.dateFrom) {
       qb.andWhere('f.createdAt >= :dateFrom', { dateFrom: query.dateFrom });
