@@ -1,6 +1,7 @@
-import React from 'react';
-import { Typography, Form, Input, Select, Switch, InputNumber, Button, App } from 'antd';
+import React, { useState } from 'react';
+import { Typography, Form, Input, Select, Switch, InputNumber, Button, App, Upload } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { UploadOutlined } from '@ant-design/icons';
 import GlassCard from '../components/GlassCard';
 import { useCreateApplication } from '../hooks/useApplications';
 import type { WidgetConfig } from '../types';
@@ -11,6 +12,7 @@ const { TextArea } = Input;
 interface FormValues {
   name: string;
   description: string;
+  appUrl: string;
   mode: string;
   question: string;
   commentRequired: boolean;
@@ -24,12 +26,15 @@ const NewApplicationPage: React.FC = () => {
   const { message } = App.useApp();
   const createApp = useCreateApplication();
   const [form] = Form.useForm<FormValues>();
+  const [iconBase64, setIconBase64] = useState<string | undefined>();
 
   const handleFinish = async (values: FormValues) => {
     try {
       const app = await createApp.mutateAsync({
         name: values.name,
         description: values.description,
+        appUrl: values.appUrl || undefined,
+        icon: iconBase64,
         widgetConfig: {
           mode: values.mode as 'floating' | 'inline',
           question: values.question || 'How would you rate your experience?',
@@ -73,6 +78,45 @@ const NewApplicationPage: React.FC = () => {
 
           <Form.Item name="description" label="Description">
             <TextArea rows={3} placeholder="Brief description of this application" />
+          </Form.Item>
+
+          <Form.Item name="appUrl" label="App URL" rules={[{ type: 'url', message: 'Please enter a valid URL' }]}>
+            <Input placeholder="https://myapp.example.com" />
+          </Form.Item>
+
+          <Form.Item label="App Icon">
+            <Upload
+              accept="image/*"
+              showUploadList={false}
+              beforeUpload={(file) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                  setIconBase64(reader.result as string);
+                };
+                reader.readAsDataURL(file);
+                return false;
+              }}
+            >
+              <Button icon={<UploadOutlined />}>Select Icon</Button>
+            </Upload>
+            {iconBase64 && (
+              <div style={{ marginTop: 8 }}>
+                <img
+                  src={iconBase64}
+                  alt="Icon preview"
+                  style={{ width: 64, height: 64, borderRadius: 8, objectFit: 'cover' }}
+                />
+                <Button
+                  type="link"
+                  danger
+                  size="small"
+                  onClick={() => setIconBase64(undefined)}
+                  style={{ display: 'block', padding: 0, marginTop: 4 }}
+                >
+                  Remove
+                </Button>
+              </div>
+            )}
           </Form.Item>
 
           <Form.Item name="mode" label="Widget Mode">

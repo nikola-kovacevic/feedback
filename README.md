@@ -21,6 +21,8 @@ A self-hosted feedback analytics platform. Collect NPS-style feedback from your 
 - **Weekly Digest** — Auto-generated "You Said, We Did" summary page per application. Shows weekly scores, top tags, completed action items, and recent comments. Shareable URL at `/api/digest/:appId/latest`. Weekly cron + on-demand generation.
 
 ### Platform
+- **App Metadata** — Add a URL and icon to each application. Icon stored as base64 in the database (no file storage needed). App name links to the URL on the Applications page.
+- **Responsive Design** — Sidebar collapses on mobile with a burger menu button. Overlay dismisses sidebar on tap.
 - **Dark Mode** — System/Light/Dark theme toggle with glassmorphism UI. Full coverage for all Ant Design components including dropdowns, popovers, and date pickers.
 - **Password Management** — Change password from the Settings page with current password verification.
 - **Self-Hosted** — Single `docker compose up` deploys everything. No external dependencies.

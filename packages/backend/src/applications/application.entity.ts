@@ -32,6 +32,12 @@ export class Application {
   @Column({ type: 'text', nullable: true })
   description: string;
 
+  @Column({ type: 'varchar', length: 2048, nullable: true })
+  appUrl: string;
+
+  @Column({ type: 'text', nullable: true })
+  icon: string; // base64-encoded image
+
   @Column({ type: 'varchar', length: 64, unique: true })
   apiKey: string;
 

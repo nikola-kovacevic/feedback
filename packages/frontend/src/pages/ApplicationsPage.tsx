@@ -1,12 +1,45 @@
 import React from 'react';
 import { Row, Col, Typography, Button, Empty, Skeleton } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, LinkOutlined } from '@ant-design/icons';
 import GlassCard from '../components/GlassCard';
 import { useApplications } from '../hooks/useApplications';
 import dayjs from 'dayjs';
 
 const { Title, Text, Paragraph } = Typography;
+
+const AppIcon: React.FC<{ icon?: string | null; name: string }> = ({ icon, name }) => {
+  if (icon) {
+    return (
+      <img
+        src={icon}
+        alt={name}
+        style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
+      />
+    );
+  }
+  const colors = ['#354B8C', '#1890ff', '#52c41a', '#fa8c16', '#eb2f96', '#722ed1'];
+  const colorIndex = name.charCodeAt(0) % colors.length;
+  return (
+    <div
+      style={{
+        width: 40,
+        height: 40,
+        borderRadius: 8,
+        background: colors[colorIndex],
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#fff',
+        fontWeight: 600,
+        fontSize: 18,
+        flexShrink: 0,
+      }}
+    >
+      {name.charAt(0).toUpperCase()}
+    </div>
+  );
+};
 
 const ApplicationsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -54,7 +87,28 @@ const ApplicationsPage: React.FC = () => {
                 className="app-card"
               >
                 <div onClick={() => navigate(`/applications/${app.id}`)}>
-                  <Title level={5} style={{ marginTop: 0 }}>{app.name}</Title>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                    <AppIcon icon={app.icon} name={app.name} />
+                    <div style={{ minWidth: 0 }}>
+                      {app.appUrl ? (
+                        <Title
+                          level={5}
+                          style={{ marginTop: 0, marginBottom: 0 }}
+                        >
+                          <a
+                            href={app.appUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {app.name}
+                          </a>
+                        </Title>
+                      ) : (
+                        <Title level={5} style={{ marginTop: 0, marginBottom: 0 }}>{app.name}</Title>
+                      )}
+                    </div>
+                  </div>
                   <Paragraph
                     ellipsis={{ rows: 2 }}
                     type="secondary"
@@ -62,6 +116,12 @@ const ApplicationsPage: React.FC = () => {
                   >
                     {app.description || 'No description'}
                   </Paragraph>
+                  {app.appUrl && (
+                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
+                      <LinkOutlined style={{ marginRight: 4 }} />
+                      {app.appUrl}
+                    </Text>
+                  )}
                   <Text type="secondary" style={{ fontSize: 12 }}>
                     Created {dayjs(app.createdAt).format('MMM D, YYYY')}
                   </Text>

@@ -26,7 +26,7 @@ export function useApplication(id: string | undefined) {
 export function useCreateApplication() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { name: string; description?: string; widgetConfig: Application['widgetConfig'] }) => {
+    mutationFn: async (payload: { name: string; description?: string; appUrl?: string; icon?: string; widgetConfig: Application['widgetConfig'] }) => {
       const { data } = await client.post('/applications', payload);
       return data as Application;
     },
@@ -46,6 +46,8 @@ export function useUpdateApplication() {
       id: string;
       name?: string;
       description?: string;
+      appUrl?: string | null;
+      icon?: string | null;
     }) => {
       const { data } = await client.patch(`/applications/${id}`, payload);
       return data as Application;

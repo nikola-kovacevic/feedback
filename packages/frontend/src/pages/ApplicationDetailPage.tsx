@@ -15,12 +15,13 @@ import {
   Checkbox,
   Tag,
   List,
+  Upload,
 } from 'antd';
-import { CopyOutlined, CheckOutlined, DeleteOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons';
+import { CopyOutlined, CheckOutlined, DeleteOutlined, ReloadOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import GlassCard from '../components/GlassCard';
 import EmbedSnippet from '../components/EmbedSnippet';
-import { useApplication, useRegenerateKey, useDeleteApplication } from '../hooks/useApplications';
+import { useApplication, useRegenerateKey, useDeleteApplication, useUpdateApplication } from '../hooks/useApplications';
 import client from '../api/client';
 import type { ActionItem } from '../types';
 import dayjs from 'dayjs';
@@ -35,8 +36,11 @@ const ApplicationDetailPage: React.FC = () => {
   const { data: app, isLoading } = useApplication(id);
   const regenerateKey = useRegenerateKey();
   const deleteApp = useDeleteApplication();
+  const updateApp = useUpdateApplication();
   const [keyCopied, setKeyCopied] = useState(false);
   const queryClient = useQueryClient();
+  const [editAppUrl, setEditAppUrl] = useState('');
+  const [editIcon, setEditIcon] = useState<string | null>(null);
 
   // --- Action Items ---
   const { data: actionItems = [] } = useQuery<ActionItem[]>({
@@ -88,6 +92,10 @@ const ApplicationDetailPage: React.FC = () => {
       setAlertEnabled(app.alertConfig.enabled);
       setAlertSlackUrl(app.alertConfig.slackUrl);
       setAlertNpsThreshold(app.alertConfig.npsThreshold);
+    }
+    if (app) {
+      setEditAppUrl(app.appUrl || '');
+      setEditIcon(app.icon || null);
     }
   }, [app]);
 
@@ -193,7 +201,21 @@ const ApplicationDetailPage: React.FC = () => {
 
       <GlassCard style={{ marginBottom: 16 }}>
         <Descriptions column={{ xs: 1, sm: 2 }} bordered>
+          <Descriptions.Item label="Icon">
+            {app.icon ? (
+              <img src={app.icon} alt={app.name} style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }} />
+            ) : (
+              <Text type="secondary">No icon</Text>
+            )}
+          </Descriptions.Item>
           <Descriptions.Item label="Name">{app.name}</Descriptions.Item>
+          <Descriptions.Item label="App URL">
+            {app.appUrl ? (
+              <a href={app.appUrl} target="_blank" rel="noopener noreferrer">{app.appUrl}</a>
+            ) : (
+              <Text type="secondary">—</Text>
+            )}
+          </Descriptions.Item>
           <Descriptions.Item label="Description">{app.description || '—'}</Descriptions.Item>
           <Descriptions.Item label="Created">{dayjs(app.createdAt).format('MMM D, YYYY h:mm A')}</Descriptions.Item>
           <Descriptions.Item label="Updated">{dayjs(app.updatedAt).format('MMM D, YYYY h:mm A')}</Descriptions.Item>
@@ -222,6 +244,69 @@ const ApplicationDetailPage: React.FC = () => {
 
       <GlassCard>
         <EmbedSnippet apiKey={app.apiKey} mode={app.widgetConfig?.mode} />
+      </GlassCard>
+
+      {/* App Settings */}
+      <GlassCard style={{ marginTop: 16 }}>
+        <Title level={4} style={{ marginTop: 0 }}>App Settings</Title>
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: 4 }}>App URL</label>
+            <Input
+              placeholder="https://myapp.example.com"
+              value={editAppUrl}
+              onChange={(e) => setEditAppUrl(e.target.value)}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: 4 }}>App Icon</label>
+            <Upload
+              accept="image/*"
+              showUploadList={false}
+              beforeUpload={(file) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                  setEditIcon(reader.result as string);
+                };
+                reader.readAsDataURL(file);
+                return false;
+              }}
+            >
+              <Button icon={<UploadOutlined />}>Select Icon</Button>
+            </Upload>
+            {editIcon && (
+              <div style={{ marginTop: 8 }}>
+                <img
+                  src={editIcon}
+                  alt="Icon preview"
+                  style={{ width: 64, height: 64, borderRadius: 8, objectFit: 'cover' }}
+                />
+                <Button
+                  type="link"
+                  danger
+                  size="small"
+                  onClick={() => setEditIcon(null)}
+                  style={{ display: 'block', padding: 0, marginTop: 4 }}
+                >
+                  Remove
+                </Button>
+              </div>
+            )}
+          </div>
+          <Button
+            type="primary"
+            loading={updateApp.isPending}
+            onClick={() => {
+              if (!id) return;
+              updateApp.mutate(
+                { id, appUrl: editAppUrl || null, icon: editIcon },
+                { onSuccess: () => message.success('App settings saved'), onError: () => message.error('Failed to save settings') }
+              );
+            }}
+          >
+            Save App Settings
+          </Button>
+        </Space>
       </GlassCard>
 
       {/* Action Items */}
@@ -340,7 +425,7 @@ const ApplicationDetailPage: React.FC = () => {
       </GlassCard>
 
       {/* Weekly Digest */}
-      <GlassCard>
+      <GlassCard style={{ marginTop: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <Title level={5} style={{ margin: 0 }}>Weekly Digest</Title>

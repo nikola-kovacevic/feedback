@@ -20,6 +20,8 @@ export interface Application {
   id: string;
   name: string;
   description: string;
+  appUrl: string | null;
+  icon: string | null;
   apiKey: string;
   previousApiKey: string | null;
   previousApiKeyExpiresAt: string | null;
