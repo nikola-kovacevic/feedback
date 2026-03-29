@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Patch, Delete,
-  Param, Body, Query, UseGuards,
+  Param, Body, Query, UseGuards, Request,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -15,27 +15,30 @@ export class ActionItemsController {
   constructor(private actionItemsService: ActionItemsService) {}
 
   @Post()
-  create(@Body() dto: CreateActionItemDto) {
-    return this.actionItemsService.create(dto);
+  create(@Body() dto: CreateActionItemDto, @Request() req: { user: { id: string } }) {
+    return this.actionItemsService.create(dto, req.user.id);
   }
 
   @Get()
-  findByApplication(@Query('applicationId') applicationId: string) {
-    return this.actionItemsService.findByApplication(applicationId);
+  findByApplication(
+    @Query('applicationId') applicationId: string,
+    @Request() req: { user: { id: string } },
+  ) {
+    return this.actionItemsService.findByApplication(applicationId, req.user.id);
   }
 
   @Patch(':id/complete')
-  complete(@Param('id') id: string) {
-    return this.actionItemsService.complete(id);
+  complete(@Param('id') id: string, @Request() req: { user: { id: string } }) {
+    return this.actionItemsService.complete(id, req.user.id);
   }
 
   @Patch(':id/uncomplete')
-  uncomplete(@Param('id') id: string) {
-    return this.actionItemsService.uncomplete(id);
+  uncomplete(@Param('id') id: string, @Request() req: { user: { id: string } }) {
+    return this.actionItemsService.uncomplete(id, req.user.id);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.actionItemsService.remove(id);
+  remove(@Param('id') id: string, @Request() req: { user: { id: string } }) {
+    return this.actionItemsService.remove(id, req.user.id);
   }
 }

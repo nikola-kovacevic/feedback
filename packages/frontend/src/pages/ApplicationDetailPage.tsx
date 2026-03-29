@@ -350,8 +350,15 @@ const ApplicationDetailPage: React.FC = () => {
           </div>
           <Space>
             <Button
-              onClick={() => {
-                window.open(`${window.location.origin}/api/digest/${id}/latest`, '_blank');
+              onClick={async () => {
+                try {
+                  const res = await client.get(`/digest/${id}/latest`, { responseType: 'blob' });
+                  const blob = new Blob([res.data], { type: 'text/html' });
+                  const url = URL.createObjectURL(blob);
+                  window.open(url, '_blank');
+                } catch {
+                  message.error('Failed to load digest');
+                }
               }}
             >
               View Digest

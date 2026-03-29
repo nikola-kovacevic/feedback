@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FeedbackResponse, Sentiment } from './feedback-response.entity';
 import { ApplicationsService } from '../applications/applications.service';
+import { ApplicationOwnershipService } from '../applications/application-ownership.guard';
 import { SentimentService } from '../sentiment/sentiment.service';
 import { SubmitFeedbackDto } from './dto/submit-feedback.dto';
 import { QueryFeedbackDto } from './dto/query-feedback.dto';
@@ -13,6 +14,7 @@ export class FeedbackService {
     @InjectRepository(FeedbackResponse)
     private feedbackRepository: Repository<FeedbackResponse>,
     private applicationsService: ApplicationsService,
+    private ownershipService: ApplicationOwnershipService,
     private sentimentService: SentimentService,
   ) {}
 
@@ -20,7 +22,6 @@ export class FeedbackService {
     const application = await this.applicationsService.findByApiKey(dto.apiKey);
     if (!application) throw new NotFoundException('Application not found');
 
-    // Validate userMetadata size (max 10KB)
     if (dto.userMetadata) {
       const metadataSize = JSON.stringify(dto.userMetadata).length;
       if (metadataSize > 10240) {
@@ -41,10 +42,17 @@ export class FeedbackService {
     return this.feedbackRepository.save(feedback);
   }
 
-  async findAll(query: QueryFeedbackDto) {
+  async findAll(query: QueryFeedbackDto, userId: string) {
+    // If filtering by applicationId, verify ownership
+    if (query.applicationId) {
+      await this.ownershipService.verifyOwnership(query.applicationId, userId);
+    }
+
     const qb = this.feedbackRepository
       .createQueryBuilder('f')
-      .leftJoinAndSelect('f.application', 'app')
+      .leftJoin('f.application', 'app')
+      .addSelect(['app.id', 'app.name'])
+      .where('app.createdById = :userId', { userId })
       .orderBy('f.createdAt', 'DESC');
 
     if (query.applicationId) {
@@ -65,10 +73,16 @@ export class FeedbackService {
     return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
-  async exportAll(query: QueryFeedbackDto) {
+  async exportAll(query: QueryFeedbackDto, userId: string) {
+    if (query.applicationId) {
+      await this.ownershipService.verifyOwnership(query.applicationId, userId);
+    }
+
     const qb = this.feedbackRepository
       .createQueryBuilder('f')
-      .leftJoinAndSelect('f.application', 'app')
+      .leftJoin('f.application', 'app')
+      .addSelect(['app.id', 'app.name'])
+      .where('app.createdById = :userId', { userId })
       .orderBy('f.createdAt', 'DESC');
 
     if (query.applicationId) {
@@ -84,23 +98,32 @@ export class FeedbackService {
     return qb.getMany();
   }
 
-  async updateTags(id: string, tags: string[]) {
-    const feedback = await this.feedbackRepository.findOne({ where: { id } });
+  private async verifyFeedbackOwnership(feedbackId: string, userId: string) {
+    const feedback = await this.feedbackRepository.findOne({
+      where: { id: feedbackId },
+      relations: ['application'],
+    });
     if (!feedback) throw new NotFoundException('Feedback not found');
+    if (feedback.application.createdById !== userId) {
+      throw new ForbiddenException('You do not have access to this feedback');
+    }
+    return feedback;
+  }
+
+  async updateTags(id: string, tags: string[], userId: string) {
+    const feedback = await this.verifyFeedbackOwnership(id, userId);
     feedback.tags = tags;
     return this.feedbackRepository.save(feedback);
   }
 
-  async resolve(id: string) {
-    const feedback = await this.feedbackRepository.findOne({ where: { id } });
-    if (!feedback) throw new NotFoundException('Feedback not found');
+  async resolve(id: string, userId: string) {
+    const feedback = await this.verifyFeedbackOwnership(id, userId);
     feedback.resolved = true;
     return this.feedbackRepository.save(feedback);
   }
 
-  async unresolve(id: string) {
-    const feedback = await this.feedbackRepository.findOne({ where: { id } });
-    if (!feedback) throw new NotFoundException('Feedback not found');
+  async unresolve(id: string, userId: string) {
+    const feedback = await this.verifyFeedbackOwnership(id, userId);
     feedback.resolved = false;
     return this.feedbackRepository.save(feedback);
   }
